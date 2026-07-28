@@ -76,6 +76,7 @@ export interface ClientFilters {
   canalDescubrimiento?: string;
   areaNegocioPrincipal?: AreaNegocioPrincipal;
   dolorExplicito?: boolean;
+  cierre?: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -270,8 +271,16 @@ export interface EtiquetaFrecuencia {
   nombre: string;
   frecuencia: number;
 }
+
+export interface CasoUsoNuevoConDetalle extends EtiquetaFrecuencia {
+  tasaCierre: number;
+}
  
 export interface DemandaNoCubierta {
-  casosUsoNuevos: EtiquetaFrecuencia[];
+  casosUsoNuevos: CasoUsoNuevoConDetalle[];
   integracionesNuevas: EtiquetaFrecuencia[];
+}
+
+export interface ClientFiltersAddition {
+  cierre?: boolean;
 }

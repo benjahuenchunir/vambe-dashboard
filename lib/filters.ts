@@ -1,5 +1,3 @@
-// filters.ts — Filter logic for the dashboard
-
 import type { ClientAnalysis, ClientFilters } from "./types";
 
 export function applyFilters(clients: ClientAnalysis[], filters: ClientFilters): ClientAnalysis[] {
@@ -11,6 +9,7 @@ export function applyFilters(clients: ClientAnalysis[], filters: ClientFilters):
     if (filters.canalDescubrimiento && c.canalDescubrimiento !== filters.canalDescubrimiento) return false;
     if (filters.areaNegocioPrincipal && c.areaNegocioPrincipal !== filters.areaNegocioPrincipal) return false;
     if (filters.dolorExplicito != null && c.dolorExplicito !== filters.dolorExplicito) return false;
+    if (filters.cierre != null && c.cierre !== filters.cierre) return false;
     return true;
   });
 }
@@ -20,10 +19,9 @@ export function searchClients(clients: ClientAnalysis[], query: string): ClientA
   const q = query.toLowerCase();
   return clients.filter(
     (c) =>
-      c.nombreCliente.toLowerCase().includes(q) ||
-      c.vendedor.toLowerCase().includes(q) ||
-      c.industria.toLowerCase().includes(q) ||
-      c.areaNegocioPrincipal.toLowerCase().includes(q)
+      c.casosUsoPrincipales.some((v) => v.toLowerCase().includes(q)) ||
+      c.integracionesRequeridas.some((v) => v.toLowerCase().includes(q)) ||
+      c.objecionesPrincipales.some((v) => v.toLowerCase().includes(q))
   );
 }
 

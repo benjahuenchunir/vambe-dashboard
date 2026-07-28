@@ -1,7 +1,28 @@
-import type { DemandaNoCubierta } from "@/lib/types";
+import type { CasoUsoNuevoConDetalle, EtiquetaFrecuencia } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-function Lista({ title, items }: { title: string; items: { nombre: string; frecuencia: number }[] }) {
+function ListaCasosUso({ items }: { items: CasoUsoNuevoConDetalle[] }) {
+  return (
+    <div>
+      <p className="mb-1 text-xs font-medium text-muted-foreground">Casos de uso nuevos</p>
+      <div className="flex flex-col gap-1.5">
+        {items.map((item) => (
+          <div key={item.nombre} className="flex items-center justify-between text-sm">
+            <span className="text-foreground">{item.nombre}</span>
+            <div className="flex items-center gap-2">
+              <Badge tone="default">{item.frecuencia}</Badge>
+              <span className="tabular-nums text-xs text-primary">{item.tasaCierre}% cierre</span>
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && <p className="text-xs text-muted-foreground">Nada nuevo para este filtro.</p>}
+      </div>
+    </div>
+  );
+}
+
+function ListaSimple({ title, items }: { title: string; items: EtiquetaFrecuencia[] }) {
   return (
     <div>
       <p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p>
@@ -18,15 +39,19 @@ function Lista({ title, items }: { title: string; items: { nombre: string; frecu
   );
 }
 
-export function DemandaNoCubiertaCard({ data }: { data: DemandaNoCubierta }) {
+export function DemandaNoCubiertaCard({
+  data,
+}: {
+  data: { casosUsoNuevos: CasoUsoNuevoConDetalle[]; integracionesNuevas: EtiquetaFrecuencia[] };
+}) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Demanda no cubierta</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <Lista title="Casos de uso nuevos" items={data.casosUsoNuevos} />
-        <Lista title="Integraciones nuevas" items={data.integracionesNuevas} />
+        <ListaCasosUso items={data.casosUsoNuevos} />
+        <ListaSimple title="Integraciones nuevas" items={data.integracionesNuevas} />
       </CardContent>
     </Card>
   );

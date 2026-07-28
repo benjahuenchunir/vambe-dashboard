@@ -2,8 +2,7 @@
 
 import type { ClientAnalysis, ClientFilters } from "@/lib/types";
 import { getFilterOptions } from "@/lib/filters";
-import { Card, CardContent } from "@/components/ui/card";
-import type { KpiSummary } from "@/lib/types";
+import { Card } from "@/components/ui/card";
 
 interface FiltersBarProps {
   clients: ClientAnalysis[];
@@ -41,14 +40,37 @@ function Select({
   );
 }
 
+function ToggleSelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean | undefined;
+  onChange: (value: boolean | undefined) => void;
+}) {
+  return (
+    <select
+      value={value === undefined ? "" : String(value)}
+      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value === "true")}
+      aria-label={label}
+      className="h-10 rounded-xl border border-border bg-card px-3 text-sm text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+    >
+      <option value="">{label}</option>
+      <option value="true">Sí</option>
+      <option value="false">No</option>
+    </select>
+  );
+}
+
 export function FiltersBar({ clients, filters, onFiltersChange, query, onQueryChange }: FiltersBarProps) {
   const options = getFilterOptions(clients);
 
-  function update<K extends keyof ClientFilters>(key: K, value: string) {
+  function update<K extends keyof ClientFilters>(key: K, value: ClientFilters[K]) {
     onFiltersChange({ ...filters, [key]: value || undefined });
   }
 
-  const hasActiveFilters = Object.values(filters).some(Boolean) || query.trim().length > 0;
+  const hasActiveFilters = Object.values(filters).some((v) => v !== undefined) || query.trim().length > 0;
 
   return (
     <Card>
@@ -58,16 +80,24 @@ export function FiltersBar({ clients, filters, onFiltersChange, query, onQueryCh
           <input
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Buscar cliente o vendedor…"
+            placeholder="Buscar en casos de uso, integraciones u objeciones…"
             className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
 
+        <Select
+          label="Cierre"
+          value={filters.cierre === undefined ? "" : String(filters.cierre)}
+          options={["true", "false"]}
+          onChange={(v) => update("cierre", (v === "" ? undefined : v === "true") as ClientFilters["cierre"])}
+        />
         <Select label="Industria" value={filters.industria ?? ""} options={options.industrias} onChange={(v) => update("industria", v)} />
+        <Select label="Área de negocio" value={filters.areaNegocioPrincipal ?? ""} options={options.areas} onChange={(v) => update("areaNegocioPrincipal", v)} />
         <Select label="Tamaño de empresa" value={filters.tamanoNegocio ?? ""} options={options.tamanos} onChange={(v) => update("tamanoNegocio", v)} />
         <Select label="Complejidad técnica" value={filters.complejidadTecnica ?? ""} options={options.complejidades} onChange={(v) => update("complejidadTecnica", v)} />
         <Select label="Vendedor" value={filters.vendedor ?? ""} options={options.vendedores} onChange={(v) => update("vendedor", v)} />
-        <Select label="Fuente de descubrimiento" value={filters.fuenteDescubrimiento ?? ""} options={options.fuentes} onChange={(v) => update("fuenteDescubrimiento", v)} />
+        <Select label="Canal de descubrimiento" value={filters.canalDescubrimiento ?? ""} options={options.fuentes} onChange={(v) => update("canalDescubrimiento", v)} />
+        <ToggleSelect label="Dolor explícito" value={filters.dolorExplicito} onChange={(v) => update("dolorExplicito", v as ClientFilters["dolorExplicito"])} />
 
         {hasActiveFilters && (
           <button
@@ -83,47 +113,5 @@ export function FiltersBar({ clients, filters, onFiltersChange, query, onQueryCh
         )}
       </div>
     </Card>
-  );
-}
-
-function KpiCard({ label, value, sub, icon }: { label: string; value: string; sub: string; icon: string }) {
-  return (
-    <Card>
-      <CardContent className="flex items-start justify-between p-5">
-        <div className="flex flex-col gap-1">
-          <span className="text-sm text-muted-foreground">{label}</span>
-          <span className="text-2xl font-semibold tabular-nums text-foreground">{value}</span>
-          <span className="text-xs text-tertiary">{sub}</span>
-        </div>
-        <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <iconify-icon icon={icon} width="18" height="18" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-export function KpiCards({ kpis }: { kpis: KpiSummary }) {
-  return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <KpiCard
-        label="Tasa de cierre general"
-        value={`${kpis.tasaCierre}%`}
-        sub={`${kpis.dealsGanados} de ${kpis.dealsTotales} negocios cerrados`}
-        icon="lucide:target"
-      />
-      <KpiCard
-        label="Volumen de pipeline promedio"
-        value={`${kpis.volumenPromedioMensual.toLocaleString("es-CL")}`}
-        sub="Consultas/mes por cliente"
-        icon="lucide:trending-up"
-      />
-      <KpiCard
-        label="Readiness Score promedio"
-        value={`${kpis.readinessPromedio} / 100`}
-        sub="Afinidad con capacidades de Vambe"
-        icon="lucide:gauge"
-      />
-    </section>
   );
 }

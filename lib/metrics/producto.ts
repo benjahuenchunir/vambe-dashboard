@@ -83,9 +83,29 @@ function topFrecuencias(values: string[], limit = 5): EtiquetaFrecuencia[] {
     .slice(0, limit);
 }
 
+function topCasosUsoNuevosConCierre(clients: ClientAnalysis[], limit = 5) {
+  const stats = new Map<string, { frecuencia: number; cerrados: number }>();
+  for (const c of clients) {
+    for (const caso of c.casosUsoNuevos ?? []) {
+      const entry = stats.get(caso) ?? { frecuencia: 0, cerrados: 0 };
+      entry.frecuencia += 1;
+      if (c.cierre) entry.cerrados += 1;
+      stats.set(caso, entry);
+    }
+  }
+  return [...stats.entries()]
+    .map(([nombre, v]) => ({
+      nombre,
+      frecuencia: v.frecuencia,
+      tasaCierre: v.frecuencia ? Math.round((v.cerrados / v.frecuencia) * 1000) / 10 : 0,
+    }))
+    .sort((a, b) => b.frecuencia - a.frecuencia)
+    .slice(0, limit);
+}
+
 export function computeDemandaNoCubierta(clients: ClientAnalysis[]): DemandaNoCubierta {
   return {
-    casosUsoNuevos: topFrecuencias(clients.flatMap((c) => c.casosUsoNuevos ?? [])),
+    casosUsoNuevos: topCasosUsoNuevosConCierre(clients),
     integracionesNuevas: topFrecuencias(clients.flatMap((c) => c.integracionesNuevas ?? [])),
   };
 }

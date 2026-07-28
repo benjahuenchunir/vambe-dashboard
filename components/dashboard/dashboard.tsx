@@ -80,44 +80,47 @@ export function Dashboard({ initialClients, initialStatus }: DashboardProps) {
       />
 
       <KpiCards kpis={metrics.kpis} />
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <CloseRateByVertical data={metrics.cierrePorVertical} />
-      <PipelineByComplexity data={metrics.pipelinePorComplejidad} />
-      <VolumeVsCloseRate data={metrics.volumenBuckets} />
-      <ReadinessDistribution data={metrics.readinessDistribucion} tasaCierreGeneral={metrics.kpis.tasaCierre} />
-    </section>
 
-    <section className="grid grid-cols-1 gap-4">
-      <TendenciaTemporalChart data={metrics.tendenciaTemporal} />
-    </section>
+      {/* Overview: tendencia primero, antes del breakdown por categoría */}
+      <section className="grid grid-cols-1 gap-4">
+        <TendenciaTemporalChart data={metrics.tendenciaTemporal} />
+      </section>
 
-    {/* Row 3: sin cambios */}
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <AreaNegocioDistribution clients={filteredClients} />
-      <TopIntegrationsTable data={metrics.topIntegraciones} />
-      <TopUseCasesTable data={metrics.topCasosUso} />
-    </section>
+      {/* Segmentación / salud del pipeline */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <CloseRateByVertical data={metrics.cierrePorVertical} />
+        <PipelineByComplexity data={metrics.pipelinePorComplejidad} />
+        <VolumeVsCloseRate data={metrics.volumenBuckets} />
+        <ReadinessDistribution data={metrics.readinessDistribucion} tasaCierreGeneral={metrics.kpis.tasaCierre} />
+      </section>
 
-    {/* Row 4: sin cambios */}
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <ChannelDemandChart data={metrics.canalesDemanda} />
-      <OportunidadesRecuperacion data={metrics.oportunidadesRecuperacion} />
-      <TopObjections data={metrics.objecionesFrecuentes} />
-    </section>
+      {/* Qué piden los clientes — necesidades ya conocidas */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <AreaNegocioDistribution clients={filteredClients} />
+        <TopIntegrationsTable data={metrics.topIntegraciones} />
+        <TopUseCasesTable data={metrics.topCasosUso} />
+      </section>
 
-    {/* Row 5: CasosUsoNuevos -> DemandaNoCubiertaCard */}
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <RoiAttribution data={metrics.roiPorFuente} />
-      <DemandaNoCubiertaCard data={metrics.demandaNoCubierta} />
-      <IndustriasNoExplotadas data={metrics.industriasNoExplotadas} />
-    </section>
+      {/* Qué piden los clientes — demanda no cubierta / estratégico */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <ChannelDemandChart data={metrics.canalesDemanda} />
+        <DemandaNoCubiertaCard data={metrics.demandaNoCubierta} />
+        <IndustriasNoExplotadas data={metrics.industriasNoExplotadas} />
+      </section>
 
-    {/* Row 6: +RiesgoImplementacionChart */}
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <VendorPerformanceTable data={metrics.vendedorPerformance} />
-      <DealQualityInsights data={metrics.calidadReunion} />
-      <RiesgoImplementacionChart data={metrics.riesgoImplementacion} />
-    </section>
+      {/* Acción de ventas — qué atender ahora */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <OportunidadesRecuperacion data={metrics.oportunidadesRecuperacion} />
+        <TopObjections data={metrics.objecionesFrecuentes} />
+        <RiesgoImplementacionChart data={metrics.riesgoImplementacion} />
+      </section>
+
+      {/* Desempeño y atribución */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <VendorPerformanceTable data={metrics.vendedorPerformance} />
+        <DealQualityInsights data={metrics.calidadReunion} />
+        <RoiAttribution data={metrics.roiPorFuente} />
+      </section>
     </div>
   );
 }
