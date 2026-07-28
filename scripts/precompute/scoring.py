@@ -1,21 +1,3 @@
-"""
-Todo lo que sea una función determinística de los campos que el LLM ya extrajo
-se calcula aquí, no se le pide al modelo (ver la nota en el prompt v3 sobre
-por qué se sacaron vambe_readiness_score, nivel_motivacion, *_nuevos, etc.).
-
-Los dos factores de riesgo (regulación compleja, necesidad de ERP/sistema de
-gestión completo) SÍ se le piden al LLM como booleans explícitos
-(`requiere_regulacion_compleja`, `requiere_sistema_gestion_completo`) — no se
-aproximan por palabras clave, porque requieren leer el contexto real de la
-transcripción (ej. "clínica que solo agenda horas" no es lo mismo que
-"clínica que necesita manejar información médica sensible").
-
-SUPPORTED_CHANNELS refleja los "canales principales" que el FAQ de Vambe
-confirma explícitamente (WhatsApp, Instagram, Facebook, TikTok, WeChat). El
-sitio menciona "tu web" en otra sección pero no aparece en esa lista oficial
-de canales soportados, así que se dejó fuera — ajústalo si el equipo de
-Vambe confirma que Web sí cuenta.
-"""
 import unicodedata
 from typing import Any
 
@@ -88,8 +70,124 @@ def compute_channels_not_supported(canales_deseados: list[str]) -> list[str]:
     ]
 
 
+# ---------------------------------------------------------------------------
+# Vambe Readiness Score — recalibrado con datos reales
+#
+# Los pesos de abajo NO son intuición de negocio: son la tasa de cierre
+# medida por segmento (ver precompute/analyze_readiness_signals.py) menos la
+# tasa de cierre general (69.4% sobre n=1939 a la fecha de este commit),
+# redondeada al entero más cercano. El score final es:
+#
+#   score = tasa_cierre_general + suma(lift de cada señal aplicable al cliente)
+#
+# clippeado a [0, 100]. Es una aproximación aditiva (asume señales
+# independientes entre sí, no es un modelo entrenado) — pero cada número acá
+# es trazable a un lift medido y a un tamaño de muestra real, a diferencia de
+# la versión anterior.
+#
+# Con una tasa de cierre general tan alta (~69%), es ESPERABLE que el score
+# recalibrado se concentre en la mitad alta del rango (aprox. 20-100) en vez
+# de repartirse parejo en 0-100 — así luce honestamente un negocio donde la
+# mayoría de los leads que llegan a reunión terminan cerrando. Un score bajo
+# (<40) sigue siendo una alerta real, solo que acá "bajo" significa
+# "significativamente peor que el resto", no "casi nunca cierra".
+#
+# Volver a correr analyze_readiness_signals.py cada cierto tiempo (más datos
+# = lifts más confiables) y actualizar estos números — en especial los
+# marcados como muestra chica o sin datos todavía.
+# ---------------------------------------------------------------------------
+
+BASELINE_TASA_CIERRE = 69  # tasa de cierre general medida (redondeada)
+
+VOLUMEN_WEIGHTS: dict[str, int] = {
+    "0-49": -10,      # n=44,  tasa 59.1%
+    "50-199": -9,     # n=320, tasa 60.6%
+    "500-1999": -3,   # n=559, tasa 66.5%
+    "200-499": 5,     # n=515, tasa 74.6%
+    "2000-9999": 4,   # n=333, tasa 73.6%
+    "10000+": 5,      # n=168, tasa 74.4%
+}
+
+TAMANO_EMPRESA_WEIGHTS: dict[str, int] = {
+    "Grande": 6,          # n=156,  tasa 75.0%
+    "Mediana": 2,         # n=314,  tasa 71.7%
+    "no_inferible": -1,   # n=1241, tasa 68.5%
+    "Pequeña": -2,        # n=228,  tasa 67.5%
+}
+
+TIPO_CANAL_WEIGHTS: dict[str, int] = {
+    "Outbound / Contacto Directo": 5,  # n=67,  tasa 74.6%
+    "Referido": 5,                     # n=434, tasa 74.0%
+    "Eventos y Webinars": 2,           # n=446, tasa 70.9%
+    "Organico Social": 1,              # n=287, tasa 70.7%
+    "Busqueda Organica": -2,           # n=208, tasa 67.3%
+    "Marketing de Contenidos": -3,     # n=277, tasa 66.1%
+    "Medios / Prensa": -7,             # n=95,  tasa 62.1%
+    "Publicidad Paga": -8,             # n=67,  tasa 61.2%
+    "Otro": -15,                       # n=46,  tasa 50.0% (lift real -19.4pp;
+                                        # se amortigua un poco por ser el
+                                        # segmento más chico entre los medidos)
+}
+
+AREA_NEGOCIO_WEIGHTS: dict[str, int] = {
+    "Agendamiento": 3,          # n=522, tasa 72.0%
+    "Atencion al Cliente": 0,   # n=577, tasa 69.7% (~ igual al promedio)
+    "Ecommerce": -1,            # n=210, tasa 68.1%
+    "Venta Consultiva": -2,     # n=629, tasa 67.4%
+}
+
+URGENCIA_WEIGHTS: dict[str, int] = {
+    "Alta": 6,   # n=49, tasa 75.5%
+    "Media": 2,  # n=70, tasa 71.4%
+    # "Baja" y "no_inferible" no se les asigna puntaje: no_inferible es ~94%
+    # del dataset (el LLM rara vez logra inferir urgencia con confianza), así
+    # que casi no aporta señal real todavía.
+}
+
+COMPLEJIDAD_WEIGHTS: dict[str, int] = {
+    "no_inferible": 1,  # n=1445, tasa 70.6%
+    "Baja": 1,          # n=191,  tasa 70.2%
+    "Alta": -4,         # n=63,   tasa 65.1%
+    "Media": -6,        # n=240,  tasa 62.9% — la fórmula anterior le daba
+                         # +10 a "Baja o Media" combinados; los datos
+                         # muestran que Media es en realidad la peor banda.
+}
+
+DOLOR_EXPLICITO_LIFT = 8         # Con: n=118, tasa 77.1% (vs. Sin: 68.9%)
+REGULACION_COMPLEJA_LIFT = 3     # Con: n=220, tasa 72.3% — la fórmula
+                                  # anterior penalizaba esto con -10; los
+                                  # datos muestran lo contrario (probable
+                                  # pre-calificación de leads regulados que
+                                  # llegan hasta esta etapa).
+SISTEMA_COMPLETO_PENALTY = -10   # Sin datos aún: n=0 con este flag en true
+                                  # en todo el dataset. Se mantiene como
+                                  # supuesto de negocio, NO como hallazgo
+                                  # medido — revisar en cuanto haya casos.
+CANAL_SOPORTADO_LIFT = 1         # Con: n=1520, tasa 70.1%
+CANAL_NO_SOPORTADO_PENALTY = -3  # Sin: n=419,  tasa 66.8%
+
+
+def _volumen_bucket(volumen: int) -> str:
+    if volumen >= 10_000:
+        return "10000+"
+    if volumen >= 2_000:
+        return "2000-9999"
+    if volumen >= 500:
+        return "500-1999"
+    if volumen >= 200:
+        return "200-499"
+    if volumen >= 50:
+        return "50-199"
+    return "0-49"
+
+
 def compute_readiness_score(extraction: dict[str, Any]) -> int:
-    """Calcula el Vambe Readiness Score (0 - 100) basado en la extracción estructurada del LLM."""
+    """Calcula el Vambe Readiness Score (0-100).
+
+    A diferencia de la versión anterior, cada peso de abajo es la tasa de
+    cierre medida por segmento (ver analyze_readiness_signals.py) menos la
+    tasa de cierre general — no una asignación por intuición de negocio.
+    """
     perfil = extraction.get("perfil_cliente", {})
     necesidades = extraction.get("necesidades_y_casos_uso", {})
     intencion = extraction.get("intencion_compra", {})
@@ -99,89 +197,33 @@ def compute_readiness_score(extraction: dict[str, Any]) -> int:
     tipo_canal = perfil.get("tipo_canal")
 
     area = necesidades.get("area_negocio_principal")
-    casos_uso = necesidades.get("casos_uso_principales") or []
     canales_deseados = necesidades.get("canales_deseados") or []
-    integraciones = necesidades.get("integraciones_requeridas") or []
 
     dolor_explicito = bool(intencion.get("dolor_explicito"))
-    urgencia = intencion.get("urgencia") or intencion.get("nivel_urgencia")
+    urgencia = intencion.get("urgencia")
     complejidad = intencion.get("complejidad_tecnica")
     requiere_regulacion = bool(intencion.get("requiere_regulacion_compleja"))
-    requiere_sistema_completo = bool(
-        intencion.get("requiere_sistema_gestion_completo")
-    )
+    requiere_sistema_completo = bool(intencion.get("requiere_sistema_gestion_completo"))
 
-    casos_uso_text = " ".join(casos_uso).lower()
-    known_integraciones_norm = {normalize_text(k) for k in KNOWN_INTEGRACIONES}
+    score = BASELINE_TASA_CIERRE
 
-    score = 0
+    score += VOLUMEN_WEIGHTS.get(_volumen_bucket(volumen), 0)
+    score += TAMANO_EMPRESA_WEIGHTS.get(tamano, 0)
+    score += TIPO_CANAL_WEIGHTS.get(tipo_canal, 0)
+    score += AREA_NEGOCIO_WEIGHTS.get(area, 0)
+    score += URGENCIA_WEIGHTS.get(urgencia, 0)
+    score += COMPLEJIDAD_WEIGHTS.get(complejidad, 0)
 
-    # 1. Graduación del volumen mensual de consultas
-    if volumen >= 10_000:
-        score += 25
-    elif volumen >= 2_000:
-        score += 20
-    elif volumen >= 500:
-        score += 15
-    elif volumen >= 200:
-        score += 10
-
-    # 2. Área de negocio y casos de uso principales
-    if area in ("Agendamiento", "Ecommerce") or any(
-        k in casos_uso_text
-        for k in ("agendamiento", "reserva", "catalogo", "catálogo")
-    ):
-        score += 20
-    elif area == "Venta Consultiva" or any(
-        k in casos_uso_text
-        for k in ("calificacion", "calificación", "seguimiento de ventas")
-    ):
-        score += 15
-    elif area == "Atencion al Cliente" or any(
-        k in casos_uso_text
-        for k in ("atencion al cliente", "soporte", "postventa", "faq")
-    ):
-        score += 10
-
-    # 3. Canal de adquisición
-    if tipo_canal in (
-        "Eventos y Webinars",
-        "Referido",
-        "Outbound / Contacto Directo",
-    ):
-        score += 10
-
-    # 4. Señales de urgencia / dolor explícito
-    if dolor_explicito or urgencia == "Alta":
-        score += 10
-    elif urgencia == "Media":
-        score += 5
-
-    # 5. Complejidad técnica manejable y soporte de canales
-    if complejidad in ("Baja", "Media"):
-        score += 10
+    if dolor_explicito:
+        score += DOLOR_EXPLICITO_LIFT
+    if requiere_regulacion:
+        score += REGULACION_COMPLEJA_LIFT
+    if requiere_sistema_completo:
+        score += SISTEMA_COMPLETO_PENALTY
 
     if any(normalize_text(c) in SUPPORTED_CHANNELS for c in canales_deseados):
-        score += 10
+        score += CANAL_SOPORTADO_LIFT
+    else:
+        score += CANAL_NO_SOPORTADO_PENALTY
 
-    # --- PENALIZACIONES Y FACTORES DE RIESGO ---
-
-    # Regulación compleja (ajustado de -20 a -10)
-    if requiere_regulacion:
-        score -= 10
-
-    # Integraciones complejas no estandarizadas
-    if complejidad == "Alta" and any(
-        normalize_text(i) not in known_integraciones_norm for i in integraciones
-    ):
-        score -= 15
-
-    # Requerimiento de desarrollo de ERP / Sistema completo
-    if requiere_sistema_completo:
-        score -= 10
-
-    # Volumen muy bajo o empresa pequeña
-    if (0 < volumen < 50) or tamano == "Pequeña":
-        score -= 10
-
-    return max(0, min(100, score))
+    return max(0, min(100, round(score)))
