@@ -63,3 +63,5 @@ create index clients_vendedor_idx on clients (vendedor);
 alter table clients enable row level security;
 -- Sin políticas: el pipeline y la app usan la service role key (server-side),
 -- que bypassa RLS. Agrega políticas si más adelante lees desde el browser con la anon key.
+
+ALTER TABLE clients ADD COLUMN canal_no_soportado_solicitado text[] DEFAULT '{}';

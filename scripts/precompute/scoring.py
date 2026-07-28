@@ -1,5 +1,3 @@
-import unicodedata
-
 """
 Todo lo que sea una función determinística de los campos que el LLM ya extrajo
 se calcula aquí, no se le pide al modelo (ver la nota en el prompt v3 sobre
@@ -18,17 +16,39 @@ sitio menciona "tu web" en otra sección pero no aparece en esa lista oficial
 de canales soportados, así que se dejó fuera — ajústalo si el equipo de
 Vambe confirma que Web sí cuenta.
 """
+import unicodedata
+from typing import Any
 
-SUPPORTED_CHANNELS = {"whatsapp", "instagram", "facebook", "tiktok", "wechat", "otro"}
-
-KNOWN_CASOS_USO = {
-    "Agendamiento", "Catalogo De Productos", "Cotizacion", "Reservas", "Atencion Al Cliente",
-    "Calificacion De Leads", "Seguimiento De Ventas", "Procesamiento De Pagos", "Llamadas Con Ia",
-    "Crm Integracion", "Recomendaciones", "Recordatorios", "Objeciones", "Upsell", "Postventa",
-    "Recompra", "Reactivacion De Clientes",
+SUPPORTED_CHANNELS: set[str] = {
+    "whatsapp",
+    "instagram",
+    "facebook",
+    "tiktok",
+    "wechat",
+    "otro",
 }
 
-KNOWN_INTEGRACIONES = {
+KNOWN_CASOS_USO: set[str] = {
+    "Agendamiento",
+    "Catalogo De Productos",
+    "Cotizacion",
+    "Reservas",
+    "Atencion Al Cliente",
+    "Calificacion De Leads",
+    "Seguimiento De Ventas",
+    "Procesamiento De Pagos",
+    "Llamadas Con Ia",
+    "Crm Integracion",
+    "Recomendaciones",
+    "Recordatorios",
+    "Objeciones",
+    "Upsell",
+    "Postventa",
+    "Recompra",
+    "Reactivacion De Clientes",
+}
+
+KNOWN_INTEGRACIONES: set[str] = {
     "CRM",
     "ERP",
     "Calendario / Agendamiento",
@@ -47,8 +67,10 @@ def normalize_text(text: str) -> str:
     """Elimina tildes, diacríticos, espacios extra y convierte a minúsculas."""
     if not text:
         return ""
-    normalized = unicodedata.normalize("NFD", text)
-    without_accents = "".join(c for c in normalized if unicodedata.category(c) != "Mn")
+    normalized = unicodedata.normalize("NFD", str(text))
+    without_accents = "".join(
+        c for c in normalized if unicodedata.category(c) != "Mn"
+    )
     return without_accents.strip().lower()
 
 
@@ -59,10 +81,15 @@ def derive_new_labels(values: list[str], known: set[str]) -> list[str]:
 
 
 def compute_channels_not_supported(canales_deseados: list[str]) -> list[str]:
-    return [c for c in canales_deseados if normalize_text(c) not in SUPPORTED_CHANNELS]
+    return [
+        c
+        for c in canales_deseados
+        if normalize_text(c) not in SUPPORTED_CHANNELS
+    ]
 
 
-def compute_readiness_score(extraction: dict) -> int:
+def compute_readiness_score(extraction: dict[str, Any]) -> int:
+    """Calcula el Vambe Readiness Score (0 - 100) basado en la extracción estructurada del LLM."""
     perfil = extraction.get("perfil_cliente", {})
     necesidades = extraction.get("necesidades_y_casos_uso", {})
     intencion = extraction.get("intencion_compra", {})
@@ -77,36 +104,84 @@ def compute_readiness_score(extraction: dict) -> int:
     integraciones = necesidades.get("integraciones_requeridas") or []
 
     dolor_explicito = bool(intencion.get("dolor_explicito"))
+    urgencia = intencion.get("urgencia") or intencion.get("nivel_urgencia")
     complejidad = intencion.get("complejidad_tecnica")
     requiere_regulacion = bool(intencion.get("requiere_regulacion_compleja"))
-    requiere_sistema_completo = bool(intencion.get("requiere_sistema_gestion_completo"))
+    requiere_sistema_completo = bool(
+        intencion.get("requiere_sistema_gestion_completo")
+    )
 
     casos_uso_text = " ".join(casos_uso).lower()
     known_integraciones_norm = {normalize_text(k) for k in KNOWN_INTEGRACIONES}
 
     score = 0
-    if volumen > 200:
+
+    # 1. Graduación del volumen mensual de consultas
+    if volumen >= 10_000:
         score += 25
-    if area in ("Agendamiento", "Ecommerce") or any(k in casos_uso_text for k in ("agendamiento", "reserva", "catalogo", "catálogo")):
+    elif volumen >= 2_000:
         score += 20
-    if area == "Venta Consultiva" or any(k in casos_uso_text for k in ("calificacion", "calificación", "seguimiento de ventas")):
+    elif volumen >= 500:
         score += 15
-    if tipo_canal in ("Offline/Evento", "Referido"):
+    elif volumen >= 200:
         score += 10
-    if dolor_explicito:
+
+    # 2. Área de negocio y casos de uso principales
+    if area in ("Agendamiento", "Ecommerce") or any(
+        k in casos_uso_text
+        for k in ("agendamiento", "reserva", "catalogo", "catálogo")
+    ):
+        score += 20
+    elif area == "Venta Consultiva" or any(
+        k in casos_uso_text
+        for k in ("calificacion", "calificación", "seguimiento de ventas")
+    ):
+        score += 15
+    elif area == "Atencion al Cliente" or any(
+        k in casos_uso_text
+        for k in ("atencion al cliente", "soporte", "postventa", "faq")
+    ):
         score += 10
+
+    # 3. Canal de adquisición
+    if tipo_canal in (
+        "Eventos y Webinars",
+        "Referido",
+        "Outbound / Contacto Directo",
+    ):
+        score += 10
+
+    # 4. Señales de urgencia / dolor explícito
+    if dolor_explicito or urgencia == "Alta":
+        score += 10
+    elif urgencia == "Media":
+        score += 5
+
+    # 5. Complejidad técnica manejable y soporte de canales
     if complejidad in ("Baja", "Media"):
         score += 10
+
     if any(normalize_text(c) in SUPPORTED_CHANNELS for c in canales_deseados):
         score += 10
 
+    # --- PENALIZACIONES Y FACTORES DE RIESGO ---
+
+    # Regulación compleja (ajustado de -20 a -10)
     if requiere_regulacion:
-        score -= 20
-    if complejidad == "Alta" and any(normalize_text(i) not in known_integraciones_norm for i in integraciones):
+        score -= 10
+
+    # Integraciones complejas no estandarizadas
+    if complejidad == "Alta" and any(
+        normalize_text(i) not in known_integraciones_norm for i in integraciones
+    ):
         score -= 15
+
+    # Requerimiento de desarrollo de ERP / Sistema completo
     if requiere_sistema_completo:
         score -= 10
-    if volumen < 20 or tamano == "Pequeña":
+
+    # Volumen muy bajo o empresa pequeña
+    if (0 < volumen < 50) or tamano == "Pequeña":
         score -= 10
 
     return max(0, min(100, score))

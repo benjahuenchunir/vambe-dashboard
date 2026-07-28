@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -6,13 +6,13 @@ class PerfilCliente(BaseModel):
     industria: str = Field(
         description="Rubro o industria del cliente normalizado. 'no_inferible' si no se menciona."
     )
-    sector_b2b_b2c: Literal["B2B", "B2C", "B2B2C", "no_inferible"]
+    sector_b2b_b2c: Literal["B2B", "B2C", "B2B2C", "B2G", "no_inferible"]
     tamano_empresa: Literal["Pequeña", "Mediana", "Grande", "no_inferible"]
     decisor_identificado: str = Field(
         default="no_mencionado",
         description="Cargo general del responsable (ej. 'Gerente', 'Dueño', 'Administrador', 'Gestor'). Nunca incluir calificativos ni especializaciones como 'Gestor de clínica'."
     )
-    volumen_consultas_mensual: Optional[int] = Field(
+    volumen_consultas_mensual: int | None = Field(
         default=None, 
         description="Número estimado de consultas mensuales (entero). Null si no es calculable."
     )
@@ -57,25 +57,25 @@ class NecesidadesYCasosUso(BaseModel):
         "Otro",
         "no_inferible",
     ]
-    area_negocio_detalle: Optional[str] = Field(
+    area_negocio_detalle: str | None = Field(
         default=None, 
         description="Detalle específico del área de negocio si aplica, o null."
     )
-    canales_deseados: List[Literal[
+    canales_deseados: list[Literal[
         "WhatsApp", "Instagram", "Facebook", "TikTok", "WeChat", "Otro"
     ]] = Field(
         default_factory=list,
         description="Canales solicitados por el cliente, normalizados al set soportado. Usa 'Otro' si pide un canal fuera de esta lista (ej. Telegram, Email, Llamadas)"
     )
-    canal_no_soportado_solicitado: Optional[str] = Field(
-        default=None,
-        description="Si el cliente pide explícitamente un canal que Vambe no soporta hoy (ej. 'Telegram', 'SMS'), regístralo aquí. Null si no aplica."
+    canales_no_soportados_solicitados: list[str] = Field(
+        default=[],
+        description="Canales que el cliente pidió explícitamente pero que Vambe no soporta hoy (ej. 'Telegram', 'SMS'). Lista vacía si no aplica o si todos los canales pedidos ya están soportados."
     )
-    casos_uso_principales: List[str] = Field(
+    casos_uso_principales: list[str] = Field(
         default_factory=list, 
         description="Casos de uso principales que busca resolver el cliente."
     )
-    integraciones_requeridas: List[str] = Field(
+    integraciones_requeridas: list[str] = Field(
         default_factory=list, 
         description=(
             "Lista de categorías GENERALES de sistemas que requiere integrar el cliente.\n"
@@ -100,7 +100,7 @@ class IntencionCompra(BaseModel):
     )
     urgencia: Literal["Alta", "Media", "Baja", "no_inferible"]
     complejidad_tecnica: Literal["Baja", "Media", "Alta", "no_inferible"]
-    objeciones_principales: List[str] = Field(
+    objeciones_principales: list[str] = Field(
         default_factory=list, 
         description=(
             "Lista de dudas, preocupaciones o barreras expresadas por el cliente.\n"

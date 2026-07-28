@@ -38,6 +38,7 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
     raw_integraciones = necesidades.get("integraciones_requeridas") or []
     raw_casos_uso = necesidades.get("casos_uso_principales") or []
     raw_objeciones = intencion.get("objeciones_principales") or []
+    canales_no_soportados_solicitados = necesidades.get("canales_no_soportados_solicitados") or []
 
     # Reconciliación (usa el pool cargado desde DB al inicio de la corrida)
     industria = reconcile_label(perfil["industria"], taxonomies.industria)
@@ -77,7 +78,7 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
         "area_negocio_principal": necesidades["area_negocio_principal"],
         "area_negocio_detalle": necesidades["area_negocio_detalle"],
         "canales_deseados": canales_deseados,
-        "canal_no_soportado_solicitado": perfil.get("canal_no_soportado_solicitado"),
+        "canales_no_soportados_solicitados": canales_no_soportados_solicitados,
         "casos_uso_principales": casos_uso_principales,
         "integraciones_requeridas": integraciones_requeridas,
         "dolor_explicito": intencion["dolor_explicito"],
