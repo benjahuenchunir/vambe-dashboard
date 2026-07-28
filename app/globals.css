@@ -1,26 +1,99 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  /* Brand & Core Palette */
+  --background: #ffffff;
+  --foreground: #1c1d1f;
+  --primary: #006bff;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f1f2;
+  --secondary-foreground: #1c1d1f;
+  --tertiary: #686f79;
+  --muted: #f1f1f2;
+  --muted-foreground: #828384;
+  --accent: #686f79;
+  --destructive: #ef4444;
+  --card: #ffffff;
+  --card-foreground: #1c1d1f;
+  --border: #e1e6ee;
+  --input: #e1e6ee;
+  --ring: #006bff;
+
+  /* Geometry & Typography */
+  --radius: 24px;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Custom Elevation & Shadows */
+  --shadow-offset-x: 0;
+  --shadow-offset-y: 10;
+  --shadow-blur: 30;
+  --shadow-spread: -8;
+  --shadow-color: rgba(15, 23, 42, 0.12);
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --primary: #006bff;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --tertiary: #94a3b8;
+  --muted: #1e293b;
+  --muted-foreground: #64748b;
+  --accent: #94a3b8;
+  --destructive: #f87171;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --border: #334155;
+  --input: #334155;
+  --ring: #006bff;
+  --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Custom Utilities */
+@utility brand-gradient {
+  background-image: linear-gradient(135deg, var(--primary), var(--accent));
+}
+
+@utility shadow-theme {
+  box-shadow:
+    calc(var(--shadow-offset-x, 0) * 1px)
+    calc(var(--shadow-offset-y, 10) * 1px)
+    calc(var(--shadow-blur, 30) * 1px)
+    calc(var(--shadow-spread, -8) * 1px)
+    var(--shadow-color, rgba(15, 23, 42, 0.12));
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
