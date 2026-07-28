@@ -58,7 +58,6 @@ def reconcile_list(raw_labels: list[str], existing: list[str]) -> list[str]:
 @dataclass
 class ExistingTaxonomies:
     industria: list[str] = field(default_factory=list)
-    canal_descubrimiento: list[str] = field(default_factory=list)
     canales_deseados: list[str] = field(default_factory=list)
     integraciones_requeridas: list[str] = field(default_factory=list)
     casos_uso_principales: list[str] = field(default_factory=list)
@@ -73,9 +72,6 @@ def build_grounding_block(t: ExistingTaxonomies) -> str:
             "Categorías ya utilizadas en registros previos — reutiliza una si la transcripción calza,",
             "o crea una nueva corta y genérica si no calza:",
             section("industria", t.industria),
-            section("canal_descubrimiento", t.canal_descubrimiento),
-            section("canales_deseados", t.canales_deseados),
-            section("integraciones_requeridas", t.integraciones_requeridas),
             section("casos_uso_principales", t.casos_uso_principales),
         ]
     )

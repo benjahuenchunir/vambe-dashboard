@@ -15,7 +15,7 @@ from precompute.scoring import (
     compute_readiness_score,
     derive_new_labels,
 )
-from precompute.taxonomy import reconcile_label, reconcile_list
+from precompute.taxonomy import reconcile_label, reconcile_list, _fold
 
 # Candado global para evitar condiciones de carrera al modificar taxonomies
 taxonomy_lock = threading.Lock()
@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Categoriza transcripciones de Vambe con Gemma 4.")
     parser.add_argument("--csv", help="Ruta al CSV (default: CSV_PATH del .env).")
     parser.add_argument("--limit", type=int, help="Procesa como máximo N filas pendientes en esta corrida.")
-    parser.add_argument("--workers", type=int, default=3, help="Número de peticiones en paralelo (default: 3).")
+    parser.add_argument("--workers", type=int, default=1, help="Número de peticiones en paralelo (default: 1).")
     return parser.parse_args()
 
 
@@ -33,28 +33,26 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
     perfil = extraction["perfil_cliente"]
     necesidades = extraction["necesidades_y_casos_uso"]
     intencion = extraction["intencion_compra"]
-    
+
     raw_canales = necesidades.get("canales_deseados") or []
     raw_integraciones = necesidades.get("integraciones_requeridas") or []
     raw_casos_uso = necesidades.get("casos_uso_principales") or []
     raw_objeciones = intencion.get("objeciones_principales") or []
 
-    # Reconciliación y mutación protegida por el lock fuera de esta función
+    # Reconciliación (usa el pool cargado desde DB al inicio de la corrida)
     industria = reconcile_label(perfil["industria"], taxonomies.industria)
-    canal_descubrimiento = reconcile_label(perfil["canal_descubrimiento"], taxonomies.canal_descubrimiento)
     canales_deseados = reconcile_list(raw_canales, taxonomies.canales_deseados)
     integraciones_requeridas = reconcile_list(raw_integraciones, taxonomies.integraciones_requeridas)
     casos_uso_principales = reconcile_list(raw_casos_uso, taxonomies.casos_uso_principales)
 
-    taxonomies.industria.append(industria)
-    taxonomies.canal_descubrimiento.append(canal_descubrimiento)
-    taxonomies.canales_deseados.extend(canales_deseados)
-    taxonomies.integraciones_requeridas.extend(integraciones_requeridas)
-    taxonomies.casos_uso_principales.extend(casos_uso_principales)
+    _append_unique(taxonomies.industria, industria)
+    _extend_unique(taxonomies.canales_deseados, canales_deseados)
+    _extend_unique(taxonomies.integraciones_requeridas, integraciones_requeridas)
+    _extend_unique(taxonomies.casos_uso_principales, casos_uso_principales)
 
     reconciled_extraction = {
         **extraction,
-        "perfil_cliente": {**perfil, "industria": industria, "canal_descubrimiento": canal_descubrimiento},
+        "perfil_cliente": {**perfil, "industria": industria},
         "necesidades_y_casos_uso": {
             **necesidades,
             "canales_deseados": canales_deseados,
@@ -74,11 +72,12 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
         "tamano_empresa": perfil["tamano_empresa"],
         "decisor_identificado": perfil["decisor_identificado"],
         "volumen_consultas_mensual": perfil["volumen_consultas_mensual"],
-        "canal_descubrimiento": canal_descubrimiento,
+        "canal_descubrimiento": perfil["canal_descubrimiento"],
         "tipo_canal": perfil["tipo_canal"],
         "area_negocio_principal": necesidades["area_negocio_principal"],
         "area_negocio_detalle": necesidades["area_negocio_detalle"],
         "canales_deseados": canales_deseados,
+        "canal_no_soportado_solicitado": perfil.get("canal_no_soportado_solicitado"),
         "casos_uso_principales": casos_uso_principales,
         "integraciones_requeridas": integraciones_requeridas,
         "dolor_explicito": intencion["dolor_explicito"],
@@ -95,12 +94,20 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
         "raw_extraction": extraction,
     }
 
+def _append_unique(pool: list[str], label: str) -> None:
+    if label and not any(_fold(label) == _fold(existing) for existing in pool):
+        pool.append(label)
+
+def _extend_unique(pool: list[str], labels: list[str]) -> None:
+    for label in labels:
+        _append_unique(pool, label)
+
 
 def process_single_row(row: CsvRow, settings, genai_client, supabase, taxonomies) -> tuple[str, str]:
     # 1. Generar prompt (lectura de taxonomies protegida por Lock)
     with taxonomy_lock:
         prompt = build_prompt(row.transcripcion, taxonomies)
-
+    
     # 2. Llamada a la API de LLM (Esto se ejecuta en paralelo sin bloquear los otros hilos)
     extraction = llm.categorize_transcript(genai_client, settings.gemma_model, prompt)
 

@@ -61,9 +61,15 @@ class NecesidadesYCasosUso(BaseModel):
         default=None, 
         description="Detalle específico del área de negocio si aplica, o null."
     )
-    canales_deseados: List[str] = Field(
-        default_factory=list, 
-        description="Lista de canales solicitados (ej. 'WhatsApp', 'Instagram'). Lista vacía si no hay."
+    canales_deseados: List[Literal[
+        "WhatsApp", "Instagram", "Facebook", "TikTok", "WeChat", "Otro"
+    ]] = Field(
+        default_factory=list,
+        description="Canales solicitados por el cliente, normalizados al set soportado. Usa 'Otro' si pide un canal fuera de esta lista (ej. Telegram, Email, Llamadas)"
+    )
+    canal_no_soportado_solicitado: Optional[str] = Field(
+        default=None,
+        description="Si el cliente pide explícitamente un canal que Vambe no soporta hoy (ej. 'Telegram', 'SMS'), regístralo aquí. Null si no aplica."
     )
     casos_uso_principales: List[str] = Field(
         default_factory=list, 
@@ -72,19 +78,22 @@ class NecesidadesYCasosUso(BaseModel):
     integraciones_requeridas: List[str] = Field(
         default_factory=list, 
         description=(
-            "Lista de sistemas o software con los que el cliente necesita integrarse.\n"
-            "REGLAS DE NORMALIZACIÓN:\n"
-            "1. Si menciona un software comercial específico, usa el nombre propio (ej: 'Salesforce', 'HubSpot', 'Shopify', 'Webpay', 'Moodle').\n"
-            "2. Si menciona un tipo de sistema sin marca explícita, mapealo a una categoría estándar:\n"
-            "   - Software de citas / reservas / agenda -> 'Calendario / Agendamiento'\n"
-            "   - LMS / plataforma de cursos / aula virtual -> 'Sistema Académico / LMS'\n"
-            "   - Sistema de inventario / gestión -> 'ERP' o 'Inventario / Stock'\n"
-            "   - Sistema de facturación / boletas -> 'Facturación / DTE'\n"
-            "   - Pipeline de ventas / gestión de leads -> 'CRM'"
+            "Lista de categorías GENERALES de sistemas que requiere integrar el cliente.\n"
+            "NUNCA uses nombres de marcas o software específicos. Mapea todo a su categoría macro:\n"
+            "- Salesforce, HubSpot, Zoho, Pipedrive -> 'CRM'\n"
+            "- Softland, Defontana, SAP -> 'ERP'\n"
+            "- Software de citas/reservas, Google Calendar -> 'Calendario / Agendamiento'\n"
+            "- Webpay, Stripe, Mercado Pago -> 'Pasarela de Pagos'\n"
+            "- Shopify, WooCommerce, Vtex -> 'Ecommerce'\n"
+            "- Moodle, Canvas, sistema de alumnos/cursos -> 'Sistema Académico / LMS'\n"
+            "- Boletas, facturas, DTE -> 'Facturación / DTE'\n"
+            "- Control de stock/inventario -> 'Inventario / Stock'\n"
+            "- 'Helpdesk / Atención al Cliente'\n"
+            "- 'Marketing Automation'\n"
+            "- 'API / Webhook'\n"
         )
     )
-
-
+    
 class IntencionCompra(BaseModel):
     dolor_explicito: bool = Field(
         description="True ÚNICAMENTE si hay lenguaje explícito de crisis o colapso ('caótico', 'no damos abasto'). False para cualquier otro problema común."
@@ -93,7 +102,19 @@ class IntencionCompra(BaseModel):
     complejidad_tecnica: Literal["Baja", "Media", "Alta", "no_inferible"]
     objeciones_principales: List[str] = Field(
         default_factory=list, 
-        description="Lista de dudas, fricciones, preocupaciones o barreras mencionadas por el cliente."
+        description=(
+            "Lista de dudas, preocupaciones o barreras expresadas por el cliente.\n"
+            "REGLA DE FORMATO: Resume y sintetiza cada punto en una CATEGORÍA GENERAL breve (2 a 4 palabras).\n"
+            "Ejemplos de categorías generales:\n"
+            "- 'Precio / Presupuesto'\n"
+            "- 'Temor a Alucinaciones de IA'\n"
+            "- 'Tiempo de Implementación'\n"
+            "- 'Privacidad / Seguridad de Datos'\n"
+            "- 'Falta de Canal / Integración'\n"
+            "- 'Resistencia al Cambio del Equipo'\n"
+            "- 'Complejidad de Integración'\n"
+            "- 'Capacidad de personalización'\n"
+        )
     )
     tono_deseado: str = Field(
         default="no_mencionado",
