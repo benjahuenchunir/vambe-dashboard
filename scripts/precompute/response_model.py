@@ -3,8 +3,38 @@ from pydantic import BaseModel, Field
 
 
 class PerfilCliente(BaseModel):
-    industria: str = Field(
-        description="Rubro o industria del cliente normalizado. 'no_inferible' si no se menciona."
+    industria: Literal[
+        "Educación y Formación",
+        "Salud, Bienestar y Fitness",
+        "Tecnología, Software e IT",
+        "Finanzas, Seguros y Contabilidad",
+        "Retail, Comercio y E-commerce",
+        "Alimentos, Bebidas y Gastronomía",
+        "Construcción, Inmobiliaria y Mantenimiento",
+        "Industria, Manufactura y Suministros",
+        "Transporte, Logística y Automotriz",
+        "Marketing, Medios y Creatividad",
+        "Servicios Profesionales y Legales",
+        "Energía y Utilities",
+        "Hotelería y Turismo",
+        "ONG y Sector Social",
+        "Seguridad y Vigilancia",
+        "Muebles, Decoración y Hogar",
+        "Agricultura",
+        "Arte y Entretenimiento",
+        "Textil, Confección y Moda",
+        "Niños y Educación Infantil",
+        "Distribución y Mayoristas",
+        "Servicios Generales y Hogar",
+        "Otros",
+        "no_inferible",
+    ] = Field(
+        description=(
+            "Rubro o industria del cliente MAPEADO a una de las categorías generales predefinidas. "
+            "NUNCA inventes una categoría nueva. Si el rubro no calza exactamente, elige la más cercana. "
+            "Si es absolutamente imposible de clasificar, usa 'Otros'. "
+            "Si no se menciona el rubro, usa 'no_inferible'."
+        )
     )
     sector_b2b_b2c: Literal["B2B", "B2C", "B2B2C", "B2G", "no_inferible"]
     tamano_empresa: Literal["Pequeña", "Mediana", "Grande", "no_inferible"]

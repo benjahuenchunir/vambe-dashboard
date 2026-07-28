@@ -41,19 +41,17 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
     canales_no_soportados_solicitados = necesidades.get("canales_no_soportados_solicitados") or []
 
     # Reconciliación (usa el pool cargado desde DB al inicio de la corrida)
-    industria = reconcile_label(perfil["industria"], taxonomies.industria)
     canales_deseados = reconcile_list(raw_canales, taxonomies.canales_deseados)
     integraciones_requeridas = reconcile_list(raw_integraciones, taxonomies.integraciones_requeridas)
     casos_uso_principales = reconcile_list(raw_casos_uso, taxonomies.casos_uso_principales)
 
-    _append_unique(taxonomies.industria, industria)
     _extend_unique(taxonomies.canales_deseados, canales_deseados)
     _extend_unique(taxonomies.integraciones_requeridas, integraciones_requeridas)
     _extend_unique(taxonomies.casos_uso_principales, casos_uso_principales)
 
     reconciled_extraction = {
         **extraction,
-        "perfil_cliente": {**perfil, "industria": industria},
+        "perfil_cliente": {**perfil, "industria": perfil["industria"]},
         "necesidades_y_casos_uso": {
             **necesidades,
             "canales_deseados": canales_deseados,
@@ -68,7 +66,7 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
         "vendedor": row.vendedor,
         "fecha_reunion": row.fecha_reunion,
         "cierre": row.cierre,
-        "industria": industria,
+        "industria": perfil["industria"],
         "sector_b2b_b2c": perfil["sector_b2b_b2c"],
         "tamano_empresa": perfil["tamano_empresa"],
         "decisor_identificado": perfil["decisor_identificado"],
