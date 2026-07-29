@@ -3,66 +3,98 @@ from pydantic import BaseModel, Field
 
 
 class PerfilCliente(BaseModel):
-    industria: Literal[
-        "Educación y Formación",
-        "Salud, Bienestar y Fitness",
-        "Tecnología, Software e IT",
-        "Finanzas, Seguros y Contabilidad",
-        "Retail, Comercio y E-commerce",
-        "Alimentos, Bebidas y Gastronomía",
-        "Construcción, Inmobiliaria y Mantenimiento",
-        "Industria, Manufactura y Suministros",
-        "Transporte, Logística y Automotriz",
-        "Marketing, Medios y Creatividad",
-        "Servicios Profesionales y Legales",
-        "Energía y Utilities",
-        "Hotelería y Turismo",
-        "ONG y Sector Social",
-        "Seguridad y Vigilancia",
-        "Muebles, Decoración y Hogar",
-        "Agricultura",
-        "Arte y Entretenimiento",
-        "Textil, Confección y Moda",
-        "Niños y Educación Infantil",
-        "Distribución y Mayoristas",
-        "Servicios Generales y Hogar",
-        "Otros",
-        "no_inferible",
-    ] = Field(
+    industria: (
+        Literal[
+            "Educación y Formación",
+            "Salud, Bienestar y Fitness",
+            "Tecnología, Software e IT",
+            "Finanzas, Seguros y Contabilidad",
+            "Retail, Comercio y E-commerce",
+            "Alimentos, Bebidas y Gastronomía",
+            "Construcción, Inmobiliaria y Mantenimiento",
+            "Industria, Manufactura y Suministros",
+            "Transporte, Logística y Automotriz",
+            "Marketing, Medios y Creatividad",
+            "Servicios Profesionales y Legales",
+            "Energía y Utilities",
+            "Hotelería y Turismo",
+            "ONG y Sector Social",
+            "Seguridad y Vigilancia",
+            "Muebles, Decoración y Hogar",
+            "Agricultura",
+            "Arte, Entretenimiento y Deportes",
+            "Textil, Confección y Moda",
+            "Niños y Educación Infantil",
+            "Distribución y Mayoristas",
+            "Servicios Generales y Hogar",
+            "Mascotas y Servicios Veterinarios",
+            "Belleza, Estética y Cuidado Personal",
+            "Otros",
+        ]
+        | None
+    ) = Field(
+        default=None,
         description=(
             "Rubro o industria del cliente MAPEADO a una de las categorías generales predefinidas. "
-            "NUNCA inventes una categoría nueva. Si el rubro no calza exactamente, elige la más cercana. "
+            "Si el rubro no calza exactamente, elige la más cercana. "
             "Si es absolutamente imposible de clasificar, usa 'Otros'. "
-            "Si no se menciona el rubro, usa 'no_inferible'."
-        )
+            "Si no se menciona el rubro, usa null."
+            "Ejemplos de mapeo:"
+            "- 'pastelería', 'catering', 'restaurante', 'distribución de bebidas/alimentos' → 'Alimentos, Bebidas y Gastronomía'"
+            "- 'gimnasio', 'clínica', 'veterinaria', 'fisioterapia', 'peluquería', 'yoga' → 'Salud, Bienestar y Fitness'"
+            "- 'colegio', 'academia', 'escuela', 'centro de capacitación' → 'Educación y Formación'"
+            "- 'agencia de viajes', 'hotel', 'hostal' → 'Hotelería y Turismo'"
+            "- 'logística', 'transporte', 'automotriz', 'concesionaria' → 'Transporte, Logística y Automotriz'"
+            "- 'inmobiliaria', 'constructora', 'alquiler de maquinaria pesada' → 'Construcción, Inmobiliaria y Mantenimiento'"
+            "- 'tienda online', 'boutique', 'e-commerce', 'supermercado' → 'Retail, Comercio y E-commerce'"
+            "- 'distribuidora', 'mayorista' → 'Distribución y Mayoristas'"
+            "- 'software', 'plataforma tecnológica', 'ERP', 'app' → 'Tecnología, Software e IT'"
+            "- 'marketing', 'agencia de publicidad', 'eventos' → 'Marketing, Medios y Creatividad'"
+            "- 'consultora', 'asesoría', 'outsourcing', 'coaching' → 'Servicios Profesionales y Legales'"
+            "- 'ONG', 'fundación', 'organización sin fines de lucro' → 'ONG y Sector Social'"
+            "- 'fábrica', 'manufactura', 'producción industrial' → 'Industria, Manufactura y Suministros'"
+            "- 'limpieza', 'seguridad', 'mantenimiento' → 'Servicios Generales y Hogar'"
+            "- 'energía solar', 'reciclaje', 'estación de carga' → 'Energía y Utilities'"
+            "- 'agricultura', 'cooperativa agrícola', 'exportación de frutas' → 'Agricultura'"
+            "- 'banco', 'seguros', 'finanzas', 'crowdfunding', 'asesoría financiera' → 'Finanzas, Seguros y Contabilidad'"
+            "- 'joyería', 'ropa', 'moda', 'textil' → 'Textil, Confección y Moda'"
+            "- 'muebles', 'decoración', 'hogar' → 'Muebles, Decoración y Hogar'"
+            "- 'arte', 'música', 'danza', 'fotografía', 'entretenimiento' → 'Arte y Entretenimiento'"
+            "- 'seguridad electrónica', 'vigilancia' → 'Seguridad y Vigilancia'"
+        ),
     )
-    sector_b2b_b2c: Literal["B2B", "B2C", "B2B2C", "B2G", "no_inferible"]
-    tamano_empresa: Literal["Pequeña", "Mediana", "Grande", "no_inferible"]
-    decisor_identificado: str = Field(
-        default="no_mencionado",
-        description="Cargo general del responsable (ej. 'Gerente', 'Dueño', 'Administrador', 'Gestor'). Nunca incluir calificativos ni especializaciones como 'Gestor de clínica'.",
+    sector_b2b_b2c: Literal["B2B", "B2C", "B2B2C", "B2G"] | None = Field(
+        default=None,
+        description="Modelo de negocio. Null si no se puede determinar.",
+    )
+    tamano_empresa: Literal["Pequeña", "Mediana", "Grande"] | None = Field(default=None, description="Tamaño de la empresa. Null si no se puede determinar.")
+    decisor_identificado: str | None = Field(
+        default=None,
+        description="Cargo general del responsable (ej. 'Gerente', 'Dueño', 'Administrador', 'Gestor'). Nunca incluir calificativos ni especializaciones como 'Gestor de clínica'. Null si no se puede determinar.",
     )
     volumen_consultas_mensual: int | None = Field(
         default=None,
         description="Número estimado de consultas mensuales (entero). Null si no es calculable.",
     )
-    canal_descubrimiento: str = Field(
-        default="no_mencionado",
-        description="Canal por el cual conoció a Vambe o 'no_mencionado'.",
+    canal_descubrimiento: str | None = Field(
+        default=None,
+        description="Canal por el cual conoció a Vambe o null.",
     )
-    tipo_canal: Literal[
-        "Busqueda Organica",
-        "Organico Social",
-        "Marketing de Contenidos",
-        "Eventos y Webinars",
-        "Outbound / Contacto Directo",
-        "Referido",
-        "Publicidad Paga",
-        "Medios / Prensa",
-        "Otro",
-        "no_mencionado",
-    ] = Field(
-        default="no_mencionado",
+    tipo_canal: (
+        Literal[
+            "Busqueda Organica",
+            "Organico Social",
+            "Marketing de Contenidos",
+            "Eventos y Webinars",
+            "Outbound / Contacto Directo",
+            "Referido",
+            "Publicidad Paga",
+            "Medios / Prensa",
+            "Otro",
+        ]
+        | None
+    ) = Field(
+        default=None,
         description=(
             "Clasificación macro del canal de adquisición:\n"
             "- 'Busqueda Organica': Google, SEO.\n"
@@ -79,14 +111,16 @@ class PerfilCliente(BaseModel):
 
 
 class NecesidadesYCasosUso(BaseModel):
-    area_negocio_principal: Literal[
-        "Ecommerce",
-        "Agendamiento",
-        "Venta Consultiva",
-        "Atencion al Cliente",
-        "Otro",
-        "no_inferible",
-    ]
+    area_negocio_principal: (
+        Literal[
+            "Ecommerce",
+            "Agendamiento",
+            "Venta Consultiva",
+            "Atencion al Cliente",
+            "Otro",
+        ]
+        | None
+    ) = Field(default=None, description="Área de negocio principal que busca resolver el cliente. Null si no se puede determinar.")
     area_negocio_detalle: str | None = Field(
         default=None,
         description="Detalle específico del área de negocio si aplica, o null.",
@@ -95,11 +129,11 @@ class NecesidadesYCasosUso(BaseModel):
         Literal["WhatsApp", "Instagram", "Facebook", "TikTok", "WeChat", "Otro"]
     ] = Field(
         default_factory=list,
-        description="Canales solicitados por el cliente, normalizados al set soportado. Usa 'Otro' si pide un canal fuera de esta lista (ej. Telegram, Email, Llamadas)",
+        description="Canales solicitados por el cliente. Usa 'Otro' si pide un canal fuera de esta lista (ej. Telegram, Email, Llamadas)",
     )
     canales_no_soportados_solicitados: list[str] = Field(
         default_factory=list,
-        description="Canales que el cliente pidió explícitamente pero que Vambe no soporta hoy (ej. 'Telegram', 'SMS'). Lista vacía si no aplica o si todos los canales pedidos ya están soportados.",
+        description="Canales que el cliente pidió explícitamente pero que Vambe no soporta hoy (ej. 'Telegram', 'SMS', 'Email'). Lista vacía si no aplica o si todos los canales pedidos ya están soportados.",
     )
     casos_uso_principales: list[str] = Field(
         default_factory=list,
@@ -126,11 +160,12 @@ class NecesidadesYCasosUso(BaseModel):
 
 
 class IntencionCompra(BaseModel):
-    dolor_explicito: bool = Field(
-        description="True ÚNICAMENTE si hay lenguaje explícito de crisis o colapso ('caótico', 'no damos abasto'). False para cualquier otro problema común."
+    dolor_explicito: bool | None = Field(
+        default=None,
+        description="True ÚNICAMENTE si hay lenguaje explícito de crisis o colapso ('caótico', 'no damos abasto'). False para cualquier otro problema común. Null si no se puede determinar.",
     )
-    urgencia: Literal["Alta", "Media", "Baja", "no_inferible"]
-    complejidad_tecnica: Literal["Baja", "Media", "Alta", "no_inferible"]
+    urgencia: Literal["Alta", "Media", "Baja"] | None = Field(default=None)
+    complejidad_tecnica: Literal["Baja", "Media", "Alta"] | None = Field(default=None)
     objeciones_principales: list[str] = Field(
         default_factory=list,
         description=(
@@ -147,8 +182,8 @@ class IntencionCompra(BaseModel):
             "- 'Capacidad de personalización'\n"
         ),
     )
-    tono_deseado: str = Field(
-        default="no_mencionado",
+    tono_deseado: str | None = Field(
+        default=None,
         description="Únicamente un adjetivo general en su forma básica (ej. 'Profesional', 'Cercano', 'Formal'). Nunca una frase ni adjetivos específicos del rubro.",
     )
     requiere_regulacion_compleja: bool | None = Field(
@@ -157,7 +192,7 @@ class IntencionCompra(BaseModel):
     )
     requiere_sistema_gestion_completo: bool | None = Field(
         default=None,
-        description="True si el cliente pide que el asistente reemplace o sea un ERP/sistema integral. False si solo busca integrarse con uno existente.",
+        description="True si el cliente pide que el asistente reemplace o sea un ERP/sistema integral. False si solo busca integrarse con uno existente. Null si no se puede determinar.",
     )
 
 

@@ -8,6 +8,8 @@ export interface ClientRow {
   created_at: string;
   csv_row_id: number;
   nombre_cliente: string;
+  telefono: string;
+  correo: string;
   vendedor: string;
   fecha_reunion: string;
   cierre: boolean;
@@ -43,9 +45,7 @@ export interface ClientRow {
   casos_uso_nuevos: string[];
   integraciones_nuevas: string[];
   raw_extraction: unknown;
-
-  // Extra column added via ALTER TABLE
-  canal_no_soportado_solicitado: string[];
+  canales_no_soportados_solicitados: string[];
 }
 
 /** Converts a DB row into the domain model used by the dashboard. */
@@ -53,6 +53,8 @@ export function rowToClient(row: ClientRow): ClientAnalysis {
   return {
     id: row.id,
     nombreCliente: row.nombre_cliente,
+    telefono: row.telefono,
+    correo: row.correo,
     vendedor: row.vendedor,
     fechaReunion: row.fecha_reunion,
     cierre: row.cierre,
@@ -76,10 +78,9 @@ export function rowToClient(row: ClientRow): ClientAnalysis {
     requiereRegulacionCompleja: row.requiere_regulacion_compleja,
     requiereSistemaGestionCompleto: row.requiere_sistema_gestion_completo,
     vambeReadinessScore: row.vambe_readiness_score,
-    canalesNoSoportados: row.canales_no_soportados ?? [],
+    canalesNoSoportados: row.canales_no_soportados_solicitados ?? [],
     casosUsoNuevos: row.casos_uso_nuevos ?? [],
     integracionesNuevas: row.integraciones_nuevas ?? [],
     rawExtraction: row.raw_extraction,
-    canalNoSoportadoSolicitado: row.canal_no_soportado_solicitado ?? [],
   };
 }

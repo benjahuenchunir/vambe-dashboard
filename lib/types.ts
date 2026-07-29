@@ -1,7 +1,14 @@
-export type TamanoNegocio = "Pequeña" | "Mediana" | "Grande" | "no_inferible";
-export type SectorB2B = "B2B" | "B2C" | "B2B2C" | "B2G" | "no_inferible";
-export type ComplejidadTecnica = "Baja" | "Media" | "Alta" | "no_inferible";
-export type NivelUrgencia = "Alta" | "Media" | "Baja" | "no_inferible";
+// ---------------------------------------------------------------------------
+// Tipos base normalizados
+// ---------------------------------------------------------------------------
+
+export type TamanoNegocio = "Pequeña" | "Mediana" | "Grande";
+
+export type SectorB2B = "B2B" | "B2C" | "B2B2C" | "B2G";
+
+export type ComplejidadTecnica = "Baja" | "Media" | "Alta";
+
+export type NivelUrgencia = "Alta" | "Media" | "Baja";
 
 export type TipoCanal =
   | "Busqueda Organica"
@@ -12,45 +19,48 @@ export type TipoCanal =
   | "Referido"
   | "Publicidad Paga"
   | "Medios / Prensa"
-  | "Otro"
-  | "no_mencionado";
+  | "Otro";
 
 export type AreaNegocioPrincipal =
   | "Ecommerce"
   | "Agendamiento"
   | "Venta Consultiva"
   | "Atencion al Cliente"
-  | "Otro"
-  | "no_inferible";
+  | "Otro";
 
-/** Single client record as it lives in the dashboard / frontend. */
+// ---------------------------------------------------------------------------
+// Entidad principal
+// ---------------------------------------------------------------------------
+
 export interface ClientAnalysis {
   id: string;
   nombreCliente: string;
+  telefono: string;
+  correo: string;
   vendedor: string;
   fechaReunion: string;
   cierre: boolean;
 
   // perfil_cliente
-  industria: string;
-  sectorB2bB2c: SectorB2B;
-  tamanoNegocio: TamanoNegocio;
-  decisorIdentificado: string;
+  industria: string | null;
+  sectorB2bB2c: SectorB2B | null;
+  tamanoNegocio: TamanoNegocio | null;
+  decisorIdentificado: string | null;
   volumenConsultasMensual: number | null;
-  canalDescubrimiento: string;
-  tipoCanal: TipoCanal;
+  canalDescubrimiento: string | null;
+  tipoCanal: TipoCanal | null;
 
   // necesidades_y_casos_uso
-  areaNegocioPrincipal: AreaNegocioPrincipal;
+  areaNegocioPrincipal: AreaNegocioPrincipal | null;
   areaNegocioDetalle: string | null;
   canalesDeseados: string[];
   casosUsoPrincipales: string[];
   integracionesRequeridas: string[];
 
   // intencion_compra
-  dolorExplicito: boolean;
-  urgencia: NivelUrgencia;
-  complejidadTecnica: ComplejidadTecnica;
+  dolorExplicito: boolean | null;
+  urgencia: NivelUrgencia | null;
+  complejidadTecnica: ComplejidadTecnica | null;
   objecionesPrincipales: string[];
   tonoDeseado: string | null;
   requiereRegulacionCompleja: boolean | null;
@@ -61,7 +71,6 @@ export interface ClientAnalysis {
   canalesNoSoportados: string[];
   casosUsoNuevos: string[];
   integracionesNuevas: string[];
-  canalNoSoportadoSolicitado: string[];
 
   // Raw LLM response for auditing / recalculation
   rawExtraction: unknown;
@@ -76,7 +85,7 @@ export interface ClientFilters {
   canalDescubrimiento?: string;
   areaNegocioPrincipal?: AreaNegocioPrincipal;
   dolorExplicito?: boolean;
-  cierre?: boolean
+  cierre?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -141,7 +150,7 @@ export interface VolumenBucket {
 }
 
 export interface CierrePorTamano {
-  tamano: TamanoNegocio;
+  tamano: TamanoNegocio | null;
   tasaCierre: number;
   total: number;
 }
@@ -178,6 +187,7 @@ export interface TopIntegracion {
 export interface TopCasoUso {
   nombre: string;
   tasaCierre: number;
+  frecuencia: number;
 }
 
 export interface CanalDemanda {
@@ -201,17 +211,19 @@ export interface AlertaObjecion {
   nombreCliente: string;
   vendedor: string;
   objecion: string;
-  urgencia: NivelUrgencia;
+  urgencia: NivelUrgencia | null;
 }
 
 export interface OportunidadRecuperacion {
   clienteId: string;
   nombreCliente: string;
+  telefono: string;
+  correo: string;
   vendedor: string;
   motivo: string;
   readinessScore: number;
   objecionPrincipal: string | null;
-  urgencia: string | null;
+  urgencia: NivelUrgencia | null;
 }
 
 export interface VendedorPerformance {
@@ -264,7 +276,7 @@ export interface TendenciaMensual {
   cerrados: number;
   tasaCierre: number;
 }
- 
+
 export interface RiesgoImplementacion {
   factor: string; // "Regulación compleja" | "Sistema de gestión completo"
   tasaCierreConRiesgo: number;
@@ -272,7 +284,7 @@ export interface RiesgoImplementacion {
   totalConRiesgo: number;
   totalSinRiesgo: number;
 }
- 
+
 export interface EtiquetaFrecuencia {
   nombre: string;
   frecuencia: number;
@@ -281,7 +293,7 @@ export interface EtiquetaFrecuencia {
 export interface CasoUsoNuevoConDetalle extends EtiquetaFrecuencia {
   tasaCierre: number;
 }
- 
+
 export interface DemandaNoCubierta {
   casosUsoNuevos: CasoUsoNuevoConDetalle[];
   integracionesNuevas: EtiquetaFrecuencia[];

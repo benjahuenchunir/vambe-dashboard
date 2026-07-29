@@ -1,14 +1,7 @@
-import type { ClientAnalysis, DatasetInfo, ProcessingStatus } from "./types";
+import type { ClientAnalysis } from "./types";
 import { supabase } from "./supabase";
 import { rowToClient, type ClientRow } from "./db-mapper";
 
-/**
- * Data-access layer backed by Supabase. This is the only file that knows
- * about the DB — swap it out (or point it at a different backend) without
- * touching API routes, metrics, or UI.
- */
-
-const TOTAL_EN_CSV = 10_000;
 const PAGE_SIZE = 1000;
 
 export async function getClients(): Promise<ClientAnalysis[]> {
@@ -18,29 +11,51 @@ export async function getClients(): Promise<ClientAnalysis[]> {
   while (true) {
     const { data, error } = await supabase
       .from("clients")
-      .select("*")
+      .select(`
+        id,
+        created_at,
+        csv_row_id,
+        nombre_cliente,
+        vendedor,
+        fecha_reunion,
+        cierre,
+        industria,
+        sector_b2b_b2c,
+        tamano_empresa,
+        decisor_identificado,
+        volumen_consultas_mensual,
+        canal_descubrimiento,
+        tipo_canal,
+        area_negocio_principal,
+        area_negocio_detalle,
+        canales_deseados,
+        casos_uso_principales,
+        integraciones_requeridas,
+        dolor_explicito,
+        urgencia,
+        complejidad_tecnica,
+        objeciones_principales,
+        tono_deseado,
+        requiere_regulacion_compleja,
+        requiere_sistema_gestion_completo,
+        vambe_readiness_score,
+        casos_uso_nuevos,
+        integraciones_nuevas,
+        canales_no_soportados_solicitados,
+        telefono,
+        email
+      `)
       .order("fecha_reunion", { ascending: false })
-      .order("id", { ascending: true }) // desempate estable — ver nota abajo
+      .order("id", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
 
     if (error) throw new Error(`Error leyendo clientes: ${error.message}`);
     if (!data || data.length === 0) break;
 
     rows.push(...(data as ClientRow[]));
-    if (data.length < PAGE_SIZE) break; // llegamos a la última página
+    if (data.length < PAGE_SIZE) break;
     from += PAGE_SIZE;
   }
 
   return rows.map(rowToClient);
-}
-
-export async function getProcessingStatus(): Promise<ProcessingStatus> {
-  const { count, error } = await supabase.from("clients").select("*", { count: "exact", head: true });
-  if (error) throw new Error(`Error leyendo estado de procesamiento: ${error.message}`);
-  const totalProcesados = count ?? 0;
-  return {
-    totalEnCsv: TOTAL_EN_CSV,
-    totalProcesados,
-    totalPendientes: Math.max(0, TOTAL_EN_CSV - totalProcesados),
-  };
 }

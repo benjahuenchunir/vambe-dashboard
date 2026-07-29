@@ -1,11 +1,16 @@
 import type { TopIntegracion } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export function TopIntegrationsTable({ data }: { data: TopIntegracion[] }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Top 5 integraciones solicitadas</CardTitle>
+        <InfoTooltip
+          description="Las 5 integraciones que más piden los clientes, con el % de negocios que las mencionan y en qué industria aparecen con más frecuencia."
+          note="Prioriza el roadmap de conectores sin código — dice qué sistema conviene integrar primero para destrabar más ventas."
+        />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {data.map((row) => (

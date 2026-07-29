@@ -58,6 +58,8 @@ export function computeOportunidadesRecuperacion(
       return {
         clienteId: c.id,
         nombreCliente: c.nombreCliente,
+        telefono: c.telefono,
+        correo: c.correo,
         vendedor: c.vendedor,
         readinessScore: c.vambeReadinessScore ?? 0,
         motivo,

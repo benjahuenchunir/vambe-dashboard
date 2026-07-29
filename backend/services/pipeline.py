@@ -75,9 +75,12 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
     return {
         "csv_row_id": row.csv_row_id,
         "nombre_cliente": row.nombre_cliente,
+        "telefono": row.telefono,
+        "email": row.email,
         "vendedor": row.vendedor,
         "fecha_reunion": row.fecha_reunion,
         "cierre": row.cierre,
+        "transcripcion": row.transcripcion,
         "industria": perfil["industria"],
         "sector_b2b_b2c": perfil["sector_b2b_b2c"],
         "tamano_empresa": perfil["tamano_empresa"],

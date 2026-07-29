@@ -11,6 +11,8 @@ create table clients (
 
   -- Campos del CRM (columnas del CSV)
   nombre_cliente text not null,
+  telefono text,
+  email text,
   vendedor text not null,
   fecha_reunion date not null,
   cierre boolean not null,
@@ -30,6 +32,7 @@ create table clients (
   canales_deseados text[] not null default '{}',
   casos_uso_principales text[] not null default '{}',
   integraciones_requeridas text[] not null default '{}',
+  transcripcion text,
 
   -- intencion_compra
   dolor_explicito boolean not null,

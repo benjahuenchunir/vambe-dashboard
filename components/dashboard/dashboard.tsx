@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import type { ClientAnalysis, ClientFilters, ProcessingStatus } from "@/lib/types";
+import type { ClientAnalysis, ClientFilters } from "@/lib/types";
 import { computeMetrics } from "@/lib/metrics";
 import { applyFilters, searchClients } from "@/lib/filters";
 
@@ -28,10 +28,9 @@ import { DemandaNoCubiertaCard } from "./insights/demanda-no-cubierta";
 
 interface DashboardProps {
   initialClients: ClientAnalysis[];
-  initialStatus: ProcessingStatus;
 }
 
-export function Dashboard({ initialClients, initialStatus }: DashboardProps) {
+export function Dashboard({ initialClients }: DashboardProps) {
   const [clients, setClients] = useState(initialClients);
   const [filters, setFilters] = useState<ClientFilters>({});
   const [query, setQuery] = useState("");

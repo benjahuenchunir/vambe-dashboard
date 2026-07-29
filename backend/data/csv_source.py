@@ -6,6 +6,8 @@ from dataclasses import dataclass
 class CsvRow:
     csv_row_id: int
     nombre_cliente: str
+    telefono: str
+    email: str
     vendedor: str
     fecha_reunion: str  # ISO date, e.g. "2024-02-15"
     cierre: bool
@@ -19,6 +21,8 @@ COLUMN_MAP = {
     "fecha": "Fecha de la Reunion",
     "cierre": "closed",
     "transcripcion": "Transcripcion",
+    "telefono": "Numero de Telefono",
+    "email": "Correo Electronico",
 }
 
 
@@ -32,6 +36,8 @@ def _parse_row(index: int, row: dict) -> CsvRow:
     return CsvRow(
         csv_row_id=index,
         nombre_cliente=row[COLUMN_MAP["nombre"]].strip(),
+        telefono=row[COLUMN_MAP["telefono"]].strip(),
+        email=row[COLUMN_MAP["email"]].strip(),
         vendedor=row[COLUMN_MAP["vendedor"]].strip(),
         fecha_reunion=row[COLUMN_MAP["fecha"]].strip(),
         cierre=row[COLUMN_MAP["cierre"]].strip() == "1",
