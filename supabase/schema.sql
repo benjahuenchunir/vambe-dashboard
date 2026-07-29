@@ -1,9 +1,3 @@
--- Reemplaza la tabla `clients` del schema anterior (v1, 16 campos planos) por una
--- alineada con lo que el prompt v3 realmente devuelve. Los datos actuales en la
--- tabla vieja son solo mock de demo, así que lo más simple es recrearla.
---
--- Ejecuta esto en el SQL editor de Supabase antes de correr el pipeline.
-
 create extension if not exists "pgcrypto";
 
 drop table if exists clients;
@@ -23,7 +17,7 @@ create table clients (
 
   -- perfil_cliente
   industria text not null,
-  sector_b2b_b2c text not null check (sector_b2b_b2c in ('B2B', 'B2C', 'B2B2C', 'no_inferible')),
+  sector_b2b_b2c text not null check (sector_b2b_b2c in ('B2B', 'B2C', 'B2B2C', 'B2G', 'no_inferible')),
   tamano_empresa text not null check (tamano_empresa in ('Pequeña', 'Mediana', 'Grande', 'no_inferible')),
   decisor_identificado text not null,
   volumen_consultas_mensual integer,
