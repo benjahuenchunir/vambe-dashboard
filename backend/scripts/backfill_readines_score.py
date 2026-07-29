@@ -13,45 +13,34 @@ from services.scoring import compute_readiness_score
 
 def main() -> None:
     settings = load_settings()
-    supabase = db.get_client(settings.supabase_url, settings.supabase_service_role_key)
+    supabase = db.get_client(
+        settings.supabase_url,
+        settings.supabase_service_role_key,
+    )
 
-    batch_size = 1000
-    start = 0
     actualizadas, fallidas = 0, 0
 
-    while True:
-        result = (
-            supabase.table("clients")
-            .select("id, raw_extraction")
-            .range(start, start + batch_size - 1)
-            .execute()
-        )
+    for row in db.paginate(
+        lambda: supabase.table("clients").select("id, raw_extraction").order("id")
+    ):
+        try:
+            nuevo_score = compute_readiness_score(row["raw_extraction"])
 
-        rows = result.data or []
+            (
+                supabase.table("clients")
+                .update({"vambe_readiness_score": nuevo_score})
+                .eq("id", row["id"])
+                .execute()
+            )
 
-        if not rows:
-            break
+            actualizadas += 1
 
-        print(f"Procesando filas {start}–{start + len(rows) - 1}...")
+            if actualizadas % 1000 == 0:
+                print(f"{actualizadas} filas procesadas...")
 
-        for row in rows:
-            try:
-                nuevo_score = compute_readiness_score(row["raw_extraction"])
-                (
-                    supabase.table("clients")
-                    .update({"vambe_readiness_score": nuevo_score})
-                    .eq("id", row["id"])
-                    .execute()
-                )
-                actualizadas += 1
-            except Exception as error:  # noqa: BLE001
-                print(f"[ERROR] fila {row['id']}: {error}")
-                fallidas += 1
-
-        if len(rows) < batch_size:
-            break
-
-        start += batch_size
+        except Exception as error:
+            print(f"[ERROR] fila {row['id']}: {error}")
+            fallidas += 1
 
     print(f"Listo. {actualizadas} actualizadas, {fallidas} fallidas.")
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ClientAnalysis, ClientFilters, ProcessingStatus } from "@/lib/types";
 import { computeMetrics } from "@/lib/metrics";
 import { applyFilters, searchClients } from "@/lib/filters";
@@ -33,7 +33,6 @@ interface DashboardProps {
 
 export function Dashboard({ initialClients, initialStatus }: DashboardProps) {
   const [clients, setClients] = useState(initialClients);
-  const [status, setStatus] = useState(initialStatus);
   const [filters, setFilters] = useState<ClientFilters>({});
   const [query, setQuery] = useState("");
 
@@ -44,21 +43,12 @@ export function Dashboard({ initialClients, initialStatus }: DashboardProps) {
 
   const metrics = useMemo(() => computeMetrics(filteredClients), [filteredClients]);
 
-  async function handleProcessMore(batchSize: number) {
-    const res = await fetch("/api/process", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ batchSize }),
-    });
+  const refetchClients = useCallback(async () => {
+    const res = await fetch("/api/clients", { cache: "no-store" });
+    if (!res.ok) return;
     const data = await res.json();
-    if (data.newClients?.length) {
-      setClients((prev) => [...prev, ...data.newClients]);
-    }
-    if (data.status) {
-      setStatus(data.status);
-    }
-    return data;
-  }
+    setClients(data.clients ?? data);
+  }, []);
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,7 +59,7 @@ export function Dashboard({ initialClients, initialStatus }: DashboardProps) {
         </p>
       </header>
 
-      <ProcessMorePanel status={status} onProcess={handleProcessMore} />
+      <ProcessMorePanel onDataUpdated={refetchClients} />
 
       <FiltersBar
         clients={clients}

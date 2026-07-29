@@ -309,6 +309,7 @@ def fetch_all_clients(db: Client) -> list[dict]:
         result = (
             db.table("clients")
             .select("id, industria")
+            .order("id")
             .range(start, start + batch_size - 1)
             .execute()
         )

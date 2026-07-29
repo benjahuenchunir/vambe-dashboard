@@ -42,7 +42,7 @@ create table clients (
 
   -- Derivado en Python (ver vambe_pipeline/scoring.py), no pedido al LLM
   vambe_readiness_score smallint check (vambe_readiness_score between 0 and 100),
-  canales_no_soportados text[] not null default '{}',
+  canales_no_soportados_solicitados text[] not null default '{}',
   casos_uso_nuevos text[] not null default '{}',
   integraciones_nuevas text[] not null default '{}',
 
@@ -57,5 +57,3 @@ create index clients_vendedor_idx on clients (vendedor);
 alter table clients enable row level security;
 -- Sin políticas: el pipeline y la app usan la service role key (server-side),
 -- que bypassa RLS. Agrega políticas si más adelante lees desde el browser con la anon key.
-
-ALTER TABLE clients ADD COLUMN canal_no_soportado_solicitado text[] DEFAULT '{}';

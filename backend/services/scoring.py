@@ -1,15 +1,6 @@
 import unicodedata
 from typing import Any
 
-SUPPORTED_CHANNELS: set[str] = {
-    "whatsapp",
-    "instagram",
-    "facebook",
-    "tiktok",
-    "wechat",
-    "otro",
-}
-
 KNOWN_CASOS_USO: set[str] = {
     "Agendamiento",
     "Catalogo De Productos",
@@ -44,7 +35,6 @@ KNOWN_INTEGRACIONES: set[str] = {
     "API / Webhook",
 }
 
-
 def normalize_text(text: str) -> str:
     """Elimina tildes, diacríticos, espacios extra y convierte a minúsculas."""
     if not text:
@@ -60,14 +50,6 @@ def derive_new_labels(values: list[str], known: set[str]) -> list[str]:
     """Compara etiquetas ignorando tildes, mayúsculas y espacios."""
     known_norm = {normalize_text(k) for k in known}
     return [v for v in values if normalize_text(v) not in known_norm]
-
-
-def compute_channels_not_supported(canales_deseados: list[str]) -> list[str]:
-    return [
-        c
-        for c in canales_deseados
-        if normalize_text(c) not in SUPPORTED_CHANNELS
-    ]
 
 
 # ---------------------------------------------------------------------------
@@ -198,6 +180,7 @@ def compute_readiness_score(extraction: dict[str, Any]) -> int:
 
     area = necesidades.get("area_negocio_principal")
     canales_deseados = necesidades.get("canales_deseados") or []
+    canales_no_soportados_solicitados = necesidades.get("canales_no_soportados_solicitados") or []
 
     dolor_explicito = bool(intencion.get("dolor_explicito"))
     urgencia = intencion.get("urgencia")
@@ -221,9 +204,9 @@ def compute_readiness_score(extraction: dict[str, Any]) -> int:
     if requiere_sistema_completo:
         score += SISTEMA_COMPLETO_PENALTY
 
-    if any(normalize_text(c) in SUPPORTED_CHANNELS for c in canales_deseados):
+    if canales_deseados:
         score += CANAL_SOPORTADO_LIFT
-    else:
+    elif canales_no_soportados_solicitados:
         score += CANAL_NO_SOPORTADO_PENALTY
 
     return max(0, min(100, round(score)))

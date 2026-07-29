@@ -13,12 +13,17 @@ from ai.prompt import build_prompt
 from services.scoring import (
     KNOWN_CASOS_USO,
     KNOWN_INTEGRACIONES,
-    compute_channels_not_supported,
     compute_readiness_score,
     derive_new_labels,
 )
 from services.taxonomy import reconcile_list, _fold
 from app.state import _state, _state_lock, _taxonomy_lock
+
+
+def _update_state(**kwargs) -> None:
+    """Thread-safe state update."""
+    with _state_lock:
+        _state.update(kwargs)
 
 
 def _append_unique(pool: list[str], label: str) -> None:
@@ -96,7 +101,6 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
             "requiere_sistema_gestion_completo"
         ),
         "vambe_readiness_score": compute_readiness_score(reconciled_extraction),
-        "canales_no_soportados": compute_channels_not_supported(canales_deseados),
         "casos_uso_nuevos": derive_new_labels(casos_uso_principales, KNOWN_CASOS_USO),
         "integraciones_nuevas": derive_new_labels(
             integraciones_requeridas, KNOWN_INTEGRACIONES
@@ -118,8 +122,45 @@ def _process_single_row(
         db.insert_client(supabase, record)
 
 
+def init_pipeline_state() -> dict:
+    """
+    Precarga el estado con total_csv y total_global_processed.
+    Llamar esto al iniciar la aplicacion (on startup) para que
+    el frontend pueda mostrar progreso global desde el minuto 0.
+    """
+    try:
+        settings = load_settings()
+        supabase = db.get_client(
+            settings.supabase_url, settings.supabase_service_role_key
+        )
+        all_rows = read_csv_rows(settings.csv_path)
+        processed_ids = db.get_processed_csv_row_ids(supabase)
+        
+        _update_state(
+            total_csv=len(all_rows),
+            total_global_processed=len(processed_ids),
+            total_lote=0,
+            processed=0,
+            succeeded=0,
+            failed=0,
+            running=False,
+            stop_requested=False,
+            error=None,
+        )
+        return dict(_state)
+    except Exception as e:
+        _update_state(error=str(e))
+        return dict(_state)
+
+
 def run_pipeline(limit: Optional[int], workers: int) -> None:
-    """Orquesta el pipeline completo en background."""
+    """
+    Orquesta el pipeline completo en background.
+    
+    Args:
+        limit: Max filas a procesar. 0 o None = sin limite (todas las pendientes).
+        workers: Hilos paralelos para llamadas al LLM.
+    """
     try:
         settings = load_settings()
         supabase = db.get_client(
@@ -127,25 +168,46 @@ def run_pipeline(limit: Optional[int], workers: int) -> None:
         )
         genai_client = llm.get_genai_client(settings.gemini_api_key)
 
+        # 1. Contar total CSV y ya procesados
         all_rows = read_csv_rows(settings.csv_path)
         processed_ids = db.get_processed_csv_row_ids(supabase)
-        pending = [r for r in all_rows if r.csv_row_id not in processed_ids]
-        if limit:
-            pending = pending[:limit]
+        total_csv = len(all_rows)
+        total_global_processed = len(processed_ids)
         
-        print(f"Pipeline: {len(pending)} filas pendientes de {len(all_rows)} totales.")
+        # 2. Calcular pendientes y aplicar limit
+        # limit=0 o None = sin limite (procesar todo lo pendiente)
+        pending = [r for r in all_rows if r.csv_row_id not in processed_ids]
+        if limit and limit > 0:
+            pending = pending[:limit]
+        total_lote = len(pending)
+        
+        print(f"Pipeline: {total_lote} filas en este lote (total CSV: {total_csv}, ya procesadas: {total_global_processed}).")
 
-        with _state_lock:
-            _state["total"] = len(pending)
+        # 3. Inicializar estado del lote
+        _update_state(
+            running=True,
+            stop_requested=False,
+            total_csv=total_csv,
+            total_global_processed=total_global_processed,
+            total_lote=total_lote,
+            processed=0,
+            succeeded=0,
+            failed=0,
+            error=None,
+        )
+
+        if total_lote == 0:
+            print("Pipeline: no hay filas pendientes.")
+            _update_state(running=False)
+            return
 
         taxonomies = db.get_existing_taxonomies(supabase)
 
-        # Somete en tandas del tamano de `workers`, chequeando stop_requested
-        # entre tandas - asi una "detencion" deja terminar la tanda en curso
-        # en vez de cortar una insercion a mitad de camino.
+        # 4. Procesar en tandas del tamano de `workers`
         for i in range(0, len(pending), workers):
             with _state_lock:
                 if _state["stop_requested"]:
+                    print("Pipeline: detencion solicitada, terminando tanda en curso...")
                     break
 
             tanda = pending[i : i + workers]
@@ -168,15 +230,22 @@ def run_pipeline(limit: Optional[int], workers: int) -> None:
                         future.result()
                         with _state_lock:
                             _state["succeeded"] += 1
+                            _state["total_global_processed"] += 1
                     except Exception as error:  # noqa: BLE001
                         with _state_lock:
                             _state["failed"] += 1
                         print(f"[ERROR] fila fallo: {error}")
 
-    except Exception as error:  # noqa: BLE001
-        with _state_lock:
-            _state["error"] = str(error)
-    finally:
+        # 5. Finalizar: actualizar total_global_processed
         with _state_lock:
             _state["running"] = False
             _state["stop_requested"] = False
+            print(f"Pipeline finalizado. {_state["succeeded"]} exitosas, {_state['failed']} fallidas.")
+
+    except Exception as error:  # noqa: BLE001
+        print(f"[ERROR CRITICO] Pipeline fallo: {error}")
+        _update_state(
+            running=False,
+            stop_requested=False,
+            error=str(error),
+        )

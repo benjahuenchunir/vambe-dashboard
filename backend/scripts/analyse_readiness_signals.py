@@ -14,7 +14,7 @@ from collections import defaultdict
 
 from data import db
 from config import load_settings
-from services.scoring import normalize_text, SUPPORTED_CHANNELS
+from services.scoring import normalize_text
 
 MIN_SAMPLE = 15  # ignora grupos con muy pocos casos, poco confiables
 
@@ -81,6 +81,7 @@ def main() -> None:
                 "volumen_consultas_mensual, dolor_explicito, urgencia, complejidad_tecnica, "
                 "requiere_regulacion_compleja, requiere_sistema_gestion_completo, canales_deseados"
             )
+            .order("id")
             .range(start, start + batch_size - 1)
             .execute()
         )
@@ -114,7 +115,7 @@ def main() -> None:
     _reporte_binario(
         "Pide algún canal soportado",
         rows,
-        lambda r: any(normalize_text(c) in SUPPORTED_CHANNELS for c in (r.get("canales_deseados") or [])),
+        lambda r: r.get("canales_deseados"),
         baseline,
     )
 

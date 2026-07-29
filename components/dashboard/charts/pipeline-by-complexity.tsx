@@ -55,11 +55,6 @@ export function PipelineByComplexity({ data }: { data: PipelinePorComplejidad[] 
             />
           </PieChart>
         </ResponsiveContainer>
-        {sinDatosPct >= 30 && (
-          <p className="mt-1 text-center text-xs text-muted-foreground">
-            {sinDatosPct}% de los negocios no tiene complejidad técnica determinada — dato pendiente de mejorar en el prompt de categorización.
-          </p>
-        )}
         {data.length === 0 && <p className="text-sm text-muted-foreground">Sin datos para este filtro.</p>}
       </CardContent>
     </Card>

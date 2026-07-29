@@ -37,8 +37,8 @@ export function CloseRateByVertical({ data }: { data: CierrePorVertical[] }) {
           note="Le dice al equipo en qué verticales enfocar prospección y contenido de ventas — no solo cuál convierte más, sino cuál conviene perseguir con confianza."
         />
       </CardHeader>
-      <CardContent style={{ height: Math.max(220, visible.length * BAR_HEIGHT + 40) }} className="pt-0">
-        <ResponsiveContainer width="100%" height="100%">
+      <CardContent style={{ height: Math.max(220, visible.length * BAR_HEIGHT + 75) }} className="pt-0">
+        <ResponsiveContainer width="100%" height="95%">
           <BarChart data={visible} layout="vertical" margin={{ left: 8, right: 32 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
             <XAxis

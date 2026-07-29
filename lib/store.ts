@@ -1,4 +1,4 @@
-import type { ClientAnalysis, ProcessingStatus } from "./types";
+import type { ClientAnalysis, DatasetInfo, ProcessingStatus } from "./types";
 import { supabase } from "./supabase";
 import { rowToClient, type ClientRow } from "./db-mapper";
 

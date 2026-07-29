@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 from pydantic import BaseModel, Field
 
 
@@ -98,7 +98,7 @@ class NecesidadesYCasosUso(BaseModel):
         description="Canales solicitados por el cliente, normalizados al set soportado. Usa 'Otro' si pide un canal fuera de esta lista (ej. Telegram, Email, Llamadas)",
     )
     canales_no_soportados_solicitados: list[str] = Field(
-        default=[],
+        default_factory=list,
         description="Canales que el cliente pidió explícitamente pero que Vambe no soporta hoy (ej. 'Telegram', 'SMS'). Lista vacía si no aplica o si todos los canales pedidos ya están soportados.",
     )
     casos_uso_principales: list[str] = Field(
@@ -151,11 +151,11 @@ class IntencionCompra(BaseModel):
         default="no_mencionado",
         description="Únicamente un adjetivo general en su forma básica (ej. 'Profesional', 'Cercano', 'Formal'). Nunca una frase ni adjetivos específicos del rubro.",
     )
-    requiere_regulacion_compleja: Optional[bool] = Field(
+    requiere_regulacion_compleja: bool | None = Field(
         default=None,
         description="True solo si opera en sector regulado (salud, legal) Y el caso de uso toca esa regulación. Null si no aplica/inferible.",
     )
-    requiere_sistema_gestion_completo: Optional[bool] = Field(
+    requiere_sistema_gestion_completo: bool | None = Field(
         default=None,
         description="True si el cliente pide que el asistente reemplace o sea un ERP/sistema integral. False si solo busca integrarse con uno existente.",
     )

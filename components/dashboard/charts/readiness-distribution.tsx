@@ -30,17 +30,17 @@ export function ReadinessDistribution({ data, tasaCierreGeneral }: ReadinessDist
               formatter={(value: number, _name, item) => [`${value}%`, `${item.payload.total} negocios (${item.payload.cerrados} cerrados)`]}
               contentStyle={{ borderRadius: 12, borderColor: "var(--border)", fontSize: 12 }}
             />
-            <ReferenceLine
+            {/* <ReferenceLine
               y={tasaCierreGeneral}
               stroke="var(--tertiary)"
               strokeDasharray="4 4"
               label={{
-                value: `Promedio general (${tasaCierreGeneral}%)`,
+                value: `Promedio (${tasaCierreGeneral}%)`,
                 position: "insideTopLeft",
                 fill: "var(--tertiary)",
                 fontSize: 11,
               }}
-            />
+            /> */}
             <Bar dataKey="tasaCierre" fill="var(--primary)" radius={[6, 6, 0, 0]}>
               <LabelList
                 dataKey="total"

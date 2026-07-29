@@ -17,7 +17,9 @@ class ActionResponse(BaseModel):
 class PipelineStatusResponse(BaseModel):
     running: bool
     stop_requested: bool
-    total: int
+    total_csv: int
+    total_global_processed: int
+    total_lote: int
     processed: int
     succeeded: int
     failed: int

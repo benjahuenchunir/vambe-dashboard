@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import health, pipeline
 from config import load_settings
+from services.pipeline import init_pipeline_state
 
 
 def create_app() -> FastAPI:
@@ -46,3 +47,7 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+@app.on_event("startup")
+async def startup():
+    init_pipeline_state()

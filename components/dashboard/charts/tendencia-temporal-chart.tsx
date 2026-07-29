@@ -16,7 +16,7 @@ export function TendenciaTemporalChart({ data }: { data: TendenciaMensual[] }) {
         />
       </CardHeader>
       <CardContent className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="90%">
           <ComposedChart data={data} margin={{ left: 8, right: 16 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="mesLabel" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />

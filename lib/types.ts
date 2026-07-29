@@ -245,10 +245,16 @@ export interface DashboardMetrics {
   vendedorPerformance: VendedorPerformance[];
 }
 
-export interface ProcessingStatus {
-  totalEnCsv: number;
-  totalProcesados: number;
-  totalPendientes: number;
+export interface PipelineStatus {
+  running: boolean;
+  stopRequested: boolean;
+  totalGlobal: number;
+  totalCsv: number;
+  totalBatch: number;
+  processed: number;
+  succeeded: number;
+  failed: number;
+  error: string | null;
 }
 
 export interface TendenciaMensual {
