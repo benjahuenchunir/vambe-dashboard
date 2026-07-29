@@ -10,11 +10,29 @@ import { reconcileLabel, reconcileList, type ExistingTaxonomies } from "./taxono
  */
 
 const TOTAL_EN_CSV = 10_000;
+const PAGE_SIZE = 1000;
 
 export async function getClients(): Promise<ClientAnalysis[]> {
-  const { data, error } = await supabase.from("clients").select("*").order("fecha_reunion", { ascending: false });
-  if (error) throw new Error(`Error leyendo clientes: ${error.message}`);
-  return (data as ClientRow[]).map(rowToClient);
+  const rows: ClientRow[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .order("fecha_reunion", { ascending: false })
+      .order("id", { ascending: true }) // desempate estable — ver nota abajo
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw new Error(`Error leyendo clientes: ${error.message}`);
+    if (!data || data.length === 0) break;
+
+    rows.push(...(data as ClientRow[]));
+    if (data.length < PAGE_SIZE) break; // llegamos a la última página
+    from += PAGE_SIZE;
+  }
+
+  return rows.map(rowToClient);
 }
 
 export async function getProcessingStatus(): Promise<ProcessingStatus> {
