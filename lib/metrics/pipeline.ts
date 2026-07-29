@@ -1,9 +1,9 @@
-import type { ClientAnalysis, ComplejidadTecnica, TendenciaMensual } from "../types";
-import { pct, avg } from "./helpers";
+import type { ClientAnalysis, ComplejidadTecnica, TendenciaMensual, IndustriaNoExplotada } from "../types";
+import { pct, avg, round1 } from "./helpers";
 
 const TOP_VERTICALS = 8;
-const MIN_CASOS_INDUSTRIA = 3;
-const MAX_TASA_CIERRE_NO_EXPLOTADA = 40;
+const MIN_CASOS_INDUSTRIA = 15;
+const LIFT_MINIMO_NO_EXPLOTADA = -10;
 
 export function computeKpis(clients: ClientAnalysis[]) {
   const total = clients.length;
@@ -49,7 +49,9 @@ export function computeCierrePorVertical(clients: ClientAnalysis[]) {
   ];
 }
 
-export function computeIndustriasNoExplotadas(clients: ClientAnalysis[]) {
+export function computeIndustriasNoExplotadas(clients: ClientAnalysis[]): IndustriaNoExplotada[] {
+  const baseline = pct(clients.filter((c) => c.cierre).length, clients.length);
+
   const porIndustria = new Map<string, ClientAnalysis[]>();
   for (const c of clients) {
     const lista = porIndustria.get(c.industria) ?? [];
@@ -68,13 +70,14 @@ export function computeIndustriasNoExplotadas(clients: ClientAnalysis[]) {
         totalCasos: casos.length,
         cerrados,
         tasaCierre,
+        lift: round1(tasaCierre - baseline),
         volumenPromedio: Math.round(volumenPromedio),
         readinessPromedio,
         diagnostico: _diagnosticoIndustria(casos, tasaCierre, readinessPromedio),
       };
     })
-    .filter((i) => i.totalCasos >= MIN_CASOS_INDUSTRIA && i.tasaCierre <= MAX_TASA_CIERRE_NO_EXPLOTADA)
-    .sort((a, b) => b.volumenPromedio - a.volumenPromedio)
+    .filter((i) => i.totalCasos >= MIN_CASOS_INDUSTRIA && i.lift <= LIFT_MINIMO_NO_EXPLOTADA)
+    .sort((a, b) => a.lift - b.lift) // peor lift primero — la anomalía más fuerte arriba
     .slice(0, 5);
 }
 
@@ -93,11 +96,11 @@ function _diagnosticoIndustria(casos: ClientAnalysis[], tasaCierre: number, read
 }
 
 export function computePipelinePorComplejidad(clients: ClientAnalysis[]) {
-  const porComplejidad = new Map<ComplejidadTecnica, number>();
+  const porComplejidad = new Map<ComplejidadTecnica | null, number>();
   for (const c of clients) {
     porComplejidad.set(c.complejidadTecnica, (porComplejidad.get(c.complejidadTecnica) ?? 0) + 1);
   }
-  return (["Baja", "Media", "Alta", "no_inferible"] as ComplejidadTecnica[]).map((complejidad) => ({
+  return (["Baja", "Media", "Alta", null] as ComplejidadTecnica[]).map((complejidad) => ({
     complejidad,
     cantidad: porComplejidad.get(complejidad) ?? 0,
     porcentaje: pct(porComplejidad.get(complejidad) ?? 0, clients.length),
@@ -105,12 +108,13 @@ export function computePipelinePorComplejidad(clients: ClientAnalysis[]) {
 }
 
 export function computeRoiPorFuente(clients: ClientAnalysis[]) {
-  const porTipoCanal = new Map<string, { total: number; cerrados: number; ejemplos: Set<string> }>();
+  const porTipoCanal = new Map<string | null, { total: number; cerrados: number; ejemplos: Set<string> }>();
   for (const c of clients) {
     const entry = porTipoCanal.get(c.tipoCanal) ?? { total: 0, cerrados: 0, ejemplos: new Set<string>() };
     entry.total += 1;
     if (c.cierre) entry.cerrados += 1;
-    entry.ejemplos.add(c.canalDescubrimiento);
+    if (c.canalDescubrimiento)
+      entry.ejemplos.add(c.canalDescubrimiento);
     porTipoCanal.set(c.tipoCanal, entry);
   }
   return [...porTipoCanal.entries()]

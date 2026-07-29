@@ -1,15 +1,25 @@
 import type { IndustriaNoExplotada } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
-export function IndustriasNoExplotadas({ data }: { data: IndustriaNoExplotada[] }) {
+interface IndustriasNoExplotadasProps {
+  data: IndustriaNoExplotada[];
+  tasaCierreGeneral: number;
+}
+
+export function IndustriasNoExplotadas({ data, tasaCierreGeneral }: IndustriasNoExplotadasProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Industrias no explotadas</CardTitle>
         <p className="text-xs text-muted-foreground">
-          Alto volumen de casos pero baja tasa de cierre (&le;40%)
+          Al menos 10 puntos por debajo del promedio general ({tasaCierreGeneral}%), con volumen suficiente para confiar en el dato
         </p>
+        <InfoTooltip
+          description="Industrias donde la tasa de cierre real está significativamente por debajo del promedio general de la cuenta, filtrando las que tienen pocos casos (dato poco confiable)."
+          note="Es una señal de negocio, no del modelo: puede indicar que el pitch, el precio o el producto no calzan bien con ese rubro específico — vale la pena revisar el diagnóstico de cada una antes de invertir más esfuerzo comercial ahí."
+        />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {data.map((row) => (
@@ -22,6 +32,7 @@ export function IndustriasNoExplotadas({ data }: { data: IndustriaNoExplotada[] 
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="text-destructive">{row.lift}pp vs. promedio</span>
               <span>Vol. promedio: {row.volumenPromedio.toLocaleString("es-CL")}/mes</span>
               <span>Readiness: {row.readinessPromedio}/100</span>
             </div>
@@ -30,7 +41,7 @@ export function IndustriasNoExplotadas({ data }: { data: IndustriaNoExplotada[] 
         ))}
         {data.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            No hay industrias con volumen suficiente y baja tasa de cierre en este filtro.
+            Ninguna industria está significativamente por debajo del promedio general ({tasaCierreGeneral}%) en este filtro — buena señal.
           </p>
         )}
       </CardContent>

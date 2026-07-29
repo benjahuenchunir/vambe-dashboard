@@ -3,12 +3,17 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CanalDemanda } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export function ChannelDemandChart({ data }: { data: CanalDemanda[] }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Demanda de canales</CardTitle>
+        <InfoTooltip
+          description="Ranking de canales pedidos por los clientes, combinando los que Vambe ya soporta con los que se piden fuera de catálogo (ej. Telegram, SMS)."
+          note="Las barras rojas son la señal más directa de qué canal nuevo priorizar en el roadmap: cuanto más alta la barra, más clientes lo están pidiendo hoy sin que exista todavía."
+        />
       </CardHeader>
       <CardContent className="h-72">
         <ResponsiveContainer width="100%" height="100%">

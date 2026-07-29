@@ -9,20 +9,17 @@ const COLORS: Record<string, string> = {
   Baja: "#a3c9ff",
   Media: "#4a9dff",
   Alta: "#006bff",
-  no_inferible: "#c7ccd1",
+  null: "#c7ccd1",
 };
 
 const LABELS: Record<string, string> = {
   Baja: "Baja",
   Media: "Media",
   Alta: "Alta",
-  no_inferible: "Sin datos suficientes",
+  null: "Sin datos suficientes",
 };
 
 export function PipelineByComplexity({ data }: { data: PipelinePorComplejidad[] }) {
-  const sinDatos = data.find((d) => d.complejidad === "no_inferible");
-  const sinDatosPct = sinDatos?.porcentaje ?? 0;
-
   return (
     <Card>
       <CardHeader>

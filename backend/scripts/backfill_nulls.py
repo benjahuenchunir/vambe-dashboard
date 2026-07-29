@@ -1,35 +1,55 @@
 """
-Backfill: reemplaza valores legacy 'no_mencionado', 'no_inferible' (y cualquier variante
-mayúscula/minúscula como 'No_inferible', 'NO_INFERIDO') por null en la base de datos.
+Backfill: reemplaza valores legacy 'no_mencionado', 'no_inferible', 'no_inferido'
+(case-insensitive) por null en columnas planas (text, boolean, text[]) y dentro
+del JSONB raw_extraction.
 
-Ejecuta UNA sola vez. No necesitas especificar columnas; ya están todas hardcodeadas.
+Ejecuta UNA sola vez.
 
-Uso con columna JSONB:
-    python -m scripts.backfill_nulls \
-        --table extracciones \
-        --json-column extraccion \
-        --batch-size 500
-
-Uso con columnas planas:
-    python -m scripts.backfill_nulls \
-        --table extracciones \
-        --batch-size 500
-
-Dry-run (no escribe nada):
-    python -m scripts.backfill_nulls \
-        --table extracciones \
-        --json-column extraccion \
-        --dry-run
+Uso:
+    python -m scripts.backfill_nulls_v2 --table clients --batch-size 500
+    python -m scripts.backfill_nulls_v2 --table clients --dry-run
 """
 
 import argparse
-from typing import Any, Set
+from typing import Any, Set, Tuple
 
 from data import db
 from config import load_settings
 
-# ── CONFIGURACIÓN: rutas a limpiar (todas las que usaban null antes) ──
-PATHS_A_LIMPIAR = [
+# ── Valores legacy (case-insensitive) ──
+VALORES_LEGACY: Set[str] = {
+    "no_mencionado",
+    "no_inferible",
+    "no_inferido",
+}
+
+# ── Columnas planas de tipo text ──
+TEXT_COLUMNS = [
+    "industria",
+    "sector_b2b_b2c",
+    "tamano_empresa",
+    "decisor_identificado",
+    "canal_descubrimiento",
+    "tipo_canal",
+    "area_negocio_principal",
+    "urgencia",
+    "complejidad_tecnica",
+    "tono_deseado",
+]
+
+# ── Columnas planas de tipo text[] ──
+ARRAY_COLUMNS = [
+    "canales_deseados",
+    "canales_no_soportados_solicitados",
+    "casos_uso_principales",
+    "integraciones_requeridas",
+    "objeciones_principales",
+    "casos_uso_nuevos",
+    "integraciones_nuevas",
+]
+
+# ── Rutas dentro de raw_extraction (JSONB) que son text/boolean ──
+JSONB_TEXT_PATHS = [
     "perfil_cliente.industria",
     "perfil_cliente.sector_b2b_b2c",
     "perfil_cliente.tamano_empresa",
@@ -45,41 +65,71 @@ PATHS_A_LIMPIAR = [
     "intencion_compra.requiere_sistema_gestion_completo",
 ]
 
-VALORES_LEGACY: Set[str] = {
-    "no_mencionado",
-    "no_inferible",
-    "no_inferido",
-}
+# ── Rutas dentro de raw_extraction (JSONB) que son arrays ──
+JSONB_ARRAY_PATHS = [
+    "necesidades_y_casos_uso.canales_deseados",
+    "necesidades_y_casos_uso.canales_no_soportados_solicitados",
+    "necesidades_y_casos_uso.casos_uso_principales",
+    "necesidades_y_casos_uso.integraciones_requeridas",
+    "intencion_compra.objeciones_principales",
+]
 
 
 def _is_legacy(val: Any) -> bool:
     return isinstance(val, str) and val.strip().lower() in VALORES_LEGACY
 
 
-def set_nested(obj: dict, path: str, value: Any) -> bool:
+def clean_text(val: Any) -> Tuple[Any, bool]:
+    """Devuelve (valor, cambió)."""
+    if _is_legacy(val):
+        return None, True
+    return val, False
+
+
+def clean_array(val: Any) -> Tuple[Any, bool]:
+    """Filtra elementos legacy de un array. Devuelve (valor, cambió)."""
+    if not isinstance(val, list):
+        return val, False
+    filtered = [v for v in val if not _is_legacy(v)]
+    return filtered, len(filtered) != len(val)
+
+
+def clean_jsonb_text(obj: dict, path: str) -> bool:
     keys = path.split(".")
     for key in keys[:-1]:
-        if key not in obj:
-            obj[key] = {}
+        if not isinstance(obj, dict) or key not in obj:
+            return False
         obj = obj[key]
     last = keys[-1]
-    if last in obj and _is_legacy(obj[last]):
-        obj[last] = value
+    if last not in obj:
+        return False
+    if _is_legacy(obj[last]):
+        obj[last] = None
+        return True
+    return False
+
+
+def clean_jsonb_array(obj: dict, path: str) -> bool:
+    keys = path.split(".")
+    for key in keys[:-1]:
+        if not isinstance(obj, dict) or key not in obj:
+            return False
+        obj = obj[key]
+    last = keys[-1]
+    if last not in obj or not isinstance(obj[last], list):
+        return False
+    filtered = [v for v in obj[last] if not _is_legacy(v)]
+    if len(filtered) != len(obj[last]):
+        obj[last] = filtered
         return True
     return False
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Backfill: convierte valores legacy a null (case-insensitive). "
-                    "No requiere especificar columnas; limpia todas las rutas definidas."
+        description="Backfill: limpia valores legacy de text, text[] y JSONB."
     )
     parser.add_argument("--table", required=True, help="Nombre de la tabla")
-    parser.add_argument(
-        "--json-column",
-        default=None,
-        help="Nombre de la columna JSONB (ej: extraccion). Si se omite, asume columnas planas.",
-    )
     parser.add_argument(
         "--batch-size",
         type=int,
@@ -89,7 +139,7 @@ def main() -> None:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="No escribe a la DB; solo muestra conteo estimado",
+        help="No escribe a la DB; solo cuenta",
     )
     args = parser.parse_args()
 
@@ -101,7 +151,6 @@ def main() -> None:
 
     print(f"▶ Escaneando tabla '{args.table}'...")
     print(f"  Modo: {'DRY-RUN (solo lectura)' if args.dry_run else 'LIVE (escritura)'}")
-    print(f"  Columna JSONB: {args.json_column or '(ninguna, columnas planas)'}")
     print(f"  Batch size: {args.batch_size}")
     print()
 
@@ -110,10 +159,9 @@ def main() -> None:
     page = 1
 
     while True:
-        # Offset pagination: funciona con UUIDs, strings, cualquier tipo de id
         query = (
             supabase.table(args.table)
-            .select("id" + (f",{args.json_column}" if args.json_column else ""))
+            .select("*")
             .order("id")
             .range(offset, offset + args.batch_size - 1)
         )
@@ -129,39 +177,51 @@ def main() -> None:
             if not reg_id:
                 continue
 
-            # ── Determinar payload a mutar ──
-            if args.json_column:
-                payload = reg.get(args.json_column) or {}
-                if not isinstance(payload, dict):
-                    continue
-                modificado = False
-                for path in PATHS_A_LIMPIAR:
-                    if set_nested(payload, path, None):
-                        modificado = True
-                if not modificado:
-                    limpios += 1
-                    continue
-                update_payload = {args.json_column: payload}
-            else:
-                payload = dict(reg)
-                modificado = False
-                for path in PATHS_A_LIMPIAR:
-                    if set_nested(payload, path, None):
-                        modificado = True
-                if not modificado:
-                    limpios += 1
-                    continue
-                update_payload = {k: v for k, v in payload.items() if k != "id"}
+            update_data = {}
+            changed = False
+
+            # ── 1. Columnas planas: text ──
+            for col in TEXT_COLUMNS:
+                val = reg.get(col)
+                cleaned, did_change = clean_text(val)
+                if did_change:
+                    update_data[col] = cleaned
+                    changed = True
+
+            # ── 2. Columnas planas: text[] ──
+            for col in ARRAY_COLUMNS:
+                val = reg.get(col)
+                cleaned, did_change = clean_array(val)
+                if did_change:
+                    update_data[col] = cleaned
+                    changed = True
+
+            # ── 3. JSONB raw_extraction ──
+            raw = reg.get("raw_extraction")
+            if isinstance(raw, dict):
+                raw_changed = False
+                for path in JSONB_TEXT_PATHS:
+                    if clean_jsonb_text(raw, path):
+                        raw_changed = True
+                for path in JSONB_ARRAY_PATHS:
+                    if clean_jsonb_array(raw, path):
+                        raw_changed = True
+                if raw_changed:
+                    update_data["raw_extraction"] = raw
+                    changed = True
+
+            if not changed:
+                limpios += 1
+                continue
 
             if args.dry_run:
                 actualizados += 1
                 continue
 
-            # ── Escritura ──
             try:
                 result = (
                     supabase.table(args.table)
-                    .update(update_payload)
+                    .update(update_data)
                     .eq("id", reg_id)
                     .execute()
                 )
@@ -179,7 +239,6 @@ def main() -> None:
 
         if len(registros) < args.batch_size:
             break
-
         offset += args.batch_size
 
     print()

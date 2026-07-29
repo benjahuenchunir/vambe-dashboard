@@ -11,7 +11,6 @@ import {
   computeReadinessDistribucion,
   computeVolumenBuckets,
   computeCalidadReunion,
-  computeRiesgoImplementacion,
 } from "./perfil-cliente";
 import {
   computeTopIntegraciones,
@@ -20,7 +19,7 @@ import {
   computeObjecionesFrecuentes,
   computeDemandaNoCubierta,
 } from "./producto";
-import { computeVendedorPerformance, computeAlertasObjeciones, computeOportunidadesRecuperacion } from "./equipo";
+import { computeVendedorPerformance, computeOportunidadesRecuperacion } from "./equipo";
 
 export function computeMetrics(clients: ClientAnalysis[]): DashboardMetrics {
   return {
@@ -34,7 +33,6 @@ export function computeMetrics(clients: ClientAnalysis[]): DashboardMetrics {
     readinessDistribucion: computeReadinessDistribucion(clients),
     volumenBuckets: computeVolumenBuckets(clients),
     calidadReunion: computeCalidadReunion(clients),
-    riesgoImplementacion: computeRiesgoImplementacion(clients),
 
     topIntegraciones: computeTopIntegraciones(clients),
     topCasosUso: computeTopCasosUso(clients),

@@ -15,7 +15,7 @@ import { ReadinessDistribution } from "./charts/readiness-distribution";
 import { AreaNegocioDistribution } from "./charts/area-negocio-distribution";
 import { TopIntegrationsTable } from "./tables/top-integrations-table";
 import { TopUseCasesTable } from "./tables/top-use-cases-table";
-import { RoiAttribution } from "./insights/roi-attribution";
+import { CloseRateByDicoverSource } from "./insights/roi-attribution";
 import { OportunidadesRecuperacion } from "./insights/oportunidades-recuperacion";
 import { DealQualityInsights } from "./insights/deal-quality-insights";
 import { TopObjections } from "./insights/top-objections";
@@ -23,7 +23,6 @@ import { VendorPerformanceTable } from "./tables/vendor-performance-table";
 import { IndustriasNoExplotadas } from "./insights/industrias-no-explotadas";
 import { ChannelDemandChart } from "./charts/channel-demand-chart";
 import { TendenciaTemporalChart } from "./charts/tendencia-temporal-chart";
-import { RiesgoImplementacionChart } from "./insights/riesgo-implementacion-chart";
 import { DemandaNoCubiertaCard } from "./insights/demanda-no-cubierta";
 
 interface DashboardProps {
@@ -49,6 +48,13 @@ export function Dashboard({ initialClients }: DashboardProps) {
     setClients(data.clients ?? data);
   }, []);
 
+  const handleResetFilters = () => {
+    setFilters({});
+    setQuery("");
+  };
+
+  const hasResults = filteredClients.length > 0;
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
@@ -68,48 +74,103 @@ export function Dashboard({ initialClients }: DashboardProps) {
         onQueryChange={setQuery}
       />
 
-      <KpiCards kpis={metrics.kpis} />
+      {!hasResults ? (
+        <EmptyStateOnNoResults onReset={handleResetFilters} />
+      ) : (
+        <>
+          <KpiCards kpis={metrics.kpis} />
 
-      {/* Overview: tendencia primero, antes del breakdown por categoría */}
-      <section className="grid grid-cols-1 gap-4">
-        <TendenciaTemporalChart data={metrics.tendenciaTemporal} />
-      </section>
+          <section className="grid grid-cols-1 gap-4">
+            <TendenciaTemporalChart data={metrics.tendenciaTemporal} />
+          </section>
 
-      {/* Segmentación / salud del pipeline */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <CloseRateByVertical data={metrics.cierrePorVertical} />
-        <PipelineByComplexity data={metrics.pipelinePorComplejidad} />
-        <VolumeVsCloseRate data={metrics.volumenBuckets} />
-        <ReadinessDistribution data={metrics.readinessDistribucion} tasaCierreGeneral={metrics.kpis.tasaCierre} />
-      </section>
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <CloseRateByVertical data={metrics.cierrePorVertical} />
+            <PipelineByComplexity data={metrics.pipelinePorComplejidad} />
+            <VolumeVsCloseRate data={metrics.volumenBuckets} />
+            <ReadinessDistribution data={metrics.readinessDistribucion} tasaCierreGeneral={metrics.kpis.tasaCierre} />
+          </section>
 
-      {/* Qué piden los clientes — necesidades ya conocidas */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <AreaNegocioDistribution clients={filteredClients} />
-        <TopIntegrationsTable data={metrics.topIntegraciones} />
-        <TopUseCasesTable data={metrics.topCasosUso} />
-      </section>
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <AreaNegocioDistribution clients={filteredClients} />
+            <TopIntegrationsTable data={metrics.topIntegraciones} />
+            <TopUseCasesTable data={metrics.topCasosUso} />
+          </section>
 
-      {/* Qué piden los clientes — demanda no cubierta / estratégico */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <ChannelDemandChart data={metrics.canalesDemanda} />
-        <DemandaNoCubiertaCard data={metrics.demandaNoCubierta} />
-        <IndustriasNoExplotadas data={metrics.industriasNoExplotadas} />
-      </section>
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <ChannelDemandChart data={metrics.canalesDemanda} />
+            <DemandaNoCubiertaCard data={metrics.demandaNoCubierta} />
+            <IndustriasNoExplotadas data={metrics.industriasNoExplotadas} tasaCierreGeneral={metrics.kpis.tasaCierre} />
+          </section>
 
-      {/* Acción de ventas — qué atender ahora */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <OportunidadesRecuperacion data={metrics.oportunidadesRecuperacion} />
-        <TopObjections data={metrics.objecionesFrecuentes} />
-        <RiesgoImplementacionChart data={metrics.riesgoImplementacion} />
-      </section>
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <OportunidadesRecuperacion data={metrics.oportunidadesRecuperacion} />
+            <TopObjections data={metrics.objecionesFrecuentes} />
+            <VendorPerformanceTable data={metrics.vendedorPerformance} />
+          </section>
 
-      {/* Desempeño y atribución */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <VendorPerformanceTable data={metrics.vendedorPerformance} />
-        <DealQualityInsights data={metrics.calidadReunion} />
-        <RoiAttribution data={metrics.roiPorFuente} />
-      </section>
+          {/* Desempeño y atribución */}
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <DealQualityInsights data={metrics.calidadReunion} />
+            <CloseRateByDicoverSource data={metrics.roiPorFuente} />
+          </section>
+        </>
+      )}
+    </div>
+  );
+}
+
+function EmptyStateOnNoResults({ onReset }: { onReset: () => void }) {
+  return (
+    <div className="flex min-h-[380px] w-full flex-col items-center justify-center rounded-[var(--radius)] border border-border bg-card p-8 text-center shadow-theme transition-all">
+      <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M13 13.6a3 3 0 1 0 3 3" />
+          <path d="M22 22l-4.35-4.35" />
+          <path d="M10 18H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5.09" />
+          <path d="M7 8h10" />
+          <path d="M7 12h4" />
+        </svg>
+      </div>
+
+      <h3 className="mt-5 text-xl font-semibold text-foreground">
+        No hay datos que hagan match con esos filtros
+      </h3>
+
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+        No encontramos ningún cliente ni métrica disponible con el criterio o término buscado.
+      </p>
+
+      <button
+        onClick={onReset}
+        className="mt-6 flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-98 cursor-pointer"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+        </svg>
+        Limpiar filtros
+      </button>
     </div>
   );
 }

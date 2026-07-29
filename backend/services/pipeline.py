@@ -56,10 +56,12 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
     casos_uso_principales = reconcile_list(
         raw_casos_uso, taxonomies.casos_uso_principales
     )
+    canales_no_soportados_solicitados = reconcile_list(
+        canales_no_soportados_solicitados, taxonomies.canales_no_soportados_solicitados
+    )
 
-    _extend_unique(taxonomies.canales_deseados, canales_deseados)
-    _extend_unique(taxonomies.integraciones_requeridas, integraciones_requeridas)
     _extend_unique(taxonomies.casos_uso_principales, casos_uso_principales)
+    _extend_unique(taxonomies.canales_no_soportados_solicitados, canales_no_soportados_solicitados)
 
     reconciled_extraction = {
         **extraction,

@@ -79,10 +79,12 @@ export interface ClientAnalysis {
 /** Filters applied from the dashboard segmentation bar. */
 export interface ClientFilters {
   industria?: string;
+  sectorB2bB2c?: SectorB2B;
   tamanoNegocio?: TamanoNegocio;
   complejidadTecnica?: ComplejidadTecnica;
+  urgencia?: NivelUrgencia;
   vendedor?: string;
-  canalDescubrimiento?: string;
+  tipoCanal?: TipoCanal;
   areaNegocioPrincipal?: AreaNegocioPrincipal;
   dolorExplicito?: boolean;
   cierre?: boolean;
@@ -123,10 +125,10 @@ export interface PipelinePorComplejidad {
 }
 
 export interface RoiFuente {
-  fuente: string; // tipo_canal (valores acotados)
+  fuente: string | null;
   tasaCierre: number;
   volumenLeads: number;
-  ejemplos: string[]; // ejemplos concretos de canal_descubrimiento
+  ejemplos: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -156,22 +158,25 @@ export interface CierrePorTamano {
 }
 
 export interface CierrePorDecisor {
-  perfil: string;
+  perfil: string | null;
   tasaCierre: number;
   total: number;
 }
 
-export interface ImpactoDolorExplicito {
-  tasaCierreConDolor: number;
-  tasaCierreSinDolor: number;
-  totalConDolor: number;
-  totalSinDolor: number;
+export interface ImpactoBinario {
+  tasaCierreCon: number;
+  tasaCierreSin: number;
+  totalCon: number;
+  totalSin: number;
 }
 
 export interface CalidadReunion {
   porTamanoNegocio: CierrePorTamano[];
   porPerfilDecisor: CierrePorDecisor[];
-  impactoDolorExplicito: ImpactoDolorExplicito;
+  porTipoComprador: { tipo: string | null; tasaCierre: number; total: number }[];
+  impactoDolorExplicito: ImpactoBinario;
+  impactoRegulacionCompleja: ImpactoBinario;
+  impactoSistemaCompleto: ImpactoBinario;
 }
 
 // ---------------------------------------------------------------------------
@@ -233,6 +238,17 @@ export interface VendedorPerformance {
   readinessPromedio: number;
 }
 
+export interface IndustriaNoExplotada {
+  industria: string;
+  totalCasos: number;
+  cerrados: number;
+  tasaCierre: number;
+  lift: number; // pp respecto al promedio general — negativo = por debajo
+  volumenPromedio: number;
+  readinessPromedio: number;
+  diagnostico: string;
+}
+
 /** Aggregate shape returned by /api/metrics and recomputed client-side on filter changes. */
 export interface DashboardMetrics {
   kpis: KpiSummary;
@@ -245,7 +261,6 @@ export interface DashboardMetrics {
   readinessDistribucion: ReadinessBucket[];
   volumenBuckets: VolumenBucket[];
   calidadReunion: CalidadReunion;
-  riesgoImplementacion: RiesgoImplementacion[];
 
   topIntegraciones: TopIntegracion[];
   topCasosUso: TopCasoUso[];
@@ -275,14 +290,6 @@ export interface TendenciaMensual {
   totalLeads: number;
   cerrados: number;
   tasaCierre: number;
-}
-
-export interface RiesgoImplementacion {
-  factor: string; // "Regulación compleja" | "Sistema de gestión completo"
-  tasaCierreConRiesgo: number;
-  tasaCierreSinRiesgo: number;
-  totalConRiesgo: number;
-  totalSinRiesgo: number;
 }
 
 export interface EtiquetaFrecuencia {

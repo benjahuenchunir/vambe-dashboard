@@ -14,7 +14,6 @@ from collections import defaultdict
 
 from data import db
 from config import load_settings
-from services.scoring import normalize_text
 
 MIN_SAMPLE = 15  # ignora grupos con muy pocos casos, poco confiables
 
@@ -101,11 +100,11 @@ def main() -> None:
     print(f"(Se ignoran grupos con menos de {MIN_SAMPLE} casos, poco confiables)")
 
     _reporte_categorico("Volumen (bucket)", rows, _volumen_bucket, baseline)
-    _reporte_categorico("Tamaño de empresa", rows, lambda r: r.get("tamano_empresa") or "no_inferible", baseline)
-    _reporte_categorico("Tipo de canal", rows, lambda r: r.get("tipo_canal") or "no_mencionado", baseline)
-    _reporte_categorico("Área de negocio", rows, lambda r: r.get("area_negocio_principal") or "no_inferible", baseline)
-    _reporte_categorico("Urgencia", rows, lambda r: r.get("urgencia") or "no_inferible", baseline)
-    _reporte_categorico("Complejidad técnica", rows, lambda r: r.get("complejidad_tecnica") or "no_inferible", baseline)
+    _reporte_categorico("Tamaño de empresa", rows, lambda r: r.get("tamano_empresa") or None, baseline)
+    _reporte_categorico("Tipo de canal", rows, lambda r: r.get("tipo_canal") or None, baseline)
+    _reporte_categorico("Área de negocio", rows, lambda r: r.get("area_negocio_principal") or None, baseline)
+    _reporte_categorico("Urgencia", rows, lambda r: r.get("urgencia") or None, baseline)
+    _reporte_categorico("Complejidad técnica", rows, lambda r: r.get("complejidad_tecnica") or None, baseline)
 
     _reporte_binario("Dolor explícito", rows, lambda r: bool(r.get("dolor_explicito")), baseline)
     _reporte_binario("Requiere regulación compleja", rows, lambda r: bool(r.get("requiere_regulacion_compleja")), baseline)

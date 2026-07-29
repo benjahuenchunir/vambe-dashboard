@@ -90,10 +90,10 @@ VOLUMEN_WEIGHTS: dict[str, int] = {
     "10000+": 5,      # n=168, tasa 74.4%
 }
 
-TAMANO_EMPRESA_WEIGHTS: dict[str, int] = {
+TAMANO_EMPRESA_WEIGHTS = {
     "Grande": 6,          # n=156,  tasa 75.0%
     "Mediana": 2,         # n=314,  tasa 71.7%
-    "no_inferible": -1,   # n=1241, tasa 68.5%
+    None: -1,   # n=1241, tasa 68.5%
     "Pequeña": -2,        # n=228,  tasa 67.5%
 }
 
@@ -121,13 +121,13 @@ AREA_NEGOCIO_WEIGHTS: dict[str, int] = {
 URGENCIA_WEIGHTS: dict[str, int] = {
     "Alta": 6,   # n=49, tasa 75.5%
     "Media": 2,  # n=70, tasa 71.4%
-    # "Baja" y "no_inferible" no se les asigna puntaje: no_inferible es ~94%
+    # "Baja" y None no se les asigna puntaje: None es ~94%
     # del dataset (el LLM rara vez logra inferir urgencia con confianza), así
     # que casi no aporta señal real todavía.
 }
 
-COMPLEJIDAD_WEIGHTS: dict[str, int] = {
-    "no_inferible": 1,  # n=1445, tasa 70.6%
+COMPLEJIDAD_WEIGHTS = {
+    None: 1,  # n=1445, tasa 70.6%
     "Baja": 1,          # n=191,  tasa 70.2%
     "Alta": -4,         # n=63,   tasa 65.1%
     "Media": -6,        # n=240,  tasa 62.9% — la fórmula anterior le daba

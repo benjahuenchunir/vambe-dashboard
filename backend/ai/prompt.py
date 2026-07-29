@@ -33,16 +33,6 @@ No existe una lista cerrada de industrias, casos de uso ni integraciones: usa el
 {grounding_block}
 </categorias_existentes>
 
-<reglas_por_campo>
-- dolor_explicito: Estricto. Solo true ante lenguaje explícito de crisis ("caótico", "colapsados", "no damos abasto"). Si no hay certeza, null.
-- volumen_consultas_mensual: "X diarias"→×30, "X semanales"→×4, rango→promedio, pistas cualitativas→null.
-- decisor_identificado: Cargo genérico ("Gerente", "Dueño", "Administrador"). Elimina especializaciones del rubro. Si no se menciona, null.
-- tono_deseado: Únicamente un adjetivo general ("Profesional", "Cercano", "Formal"). Jamás frases. Si no se menciona, null.
-- objeciones_principales: Extrae cualquier duda, preocupación, reticencia o fricción expresada por el cliente. Incluye miedos sobre la IA (alucinaciones, dar mal un precio), costo/presupuesto, tiempo de implementación, privacidad de datos, resistencia al cambio del equipo o falta de un canal/integración.
-- requiere_regulacion_compleja: true solo si opera en rubros regulados (salud/farmacia/legal) Y el caso de uso específico exige cumplimiento legal/certificación. (Ej.: agendar citas en una clínica es false). Si no aplica o no se puede inferir, null.
-- requiere_sistema_gestion_completo: true solo si pide reemplazar o crear un ERP/sistema integral desde cero. Si solo quiere integrarse con su sistema actual, es false. Si no se puede determinar, null.
-</reglas_por_campo>
-
 <ejemplos>
 Transcripción: "Recibimos entre 800 y 1500 consultas diarias por WhatsApp sobre horarios, disponibilidad de productos y promociones. El volumen es insostenible para nuestro equipo actual. Conocí Vambe a través de LinkedIn mientras buscaba soluciones de automatización. Lo que realmente necesitamos es un chatbot que entienda el contexto de nuestro catálogo, que maneje múltiples canales y que pueda derivar consultas complejas a un humano cuando sea necesario. Además, es importante que mantenga el tono amable de nuestra marca."
 
@@ -51,8 +41,8 @@ Extracción esperada:
   "perfil_cliente": {
     "industria": "Retail, Comercio y E-commerce",
     "sector_b2b_b2c": "B2C",
-    "tamano_empresa": "no_inferible",
-    "decisor_identificado": "no_mencionado",
+    "tamano_empresa": null,
+    "decisor_identificado": null,
     "volumen_consultas_mensual": 34500,
     "canal_descubrimiento": "LinkedIn",
     "tipo_canal": "Organico Social"
@@ -61,13 +51,13 @@ Extracción esperada:
     "area_negocio_principal": "Atencion al Cliente",
     "area_negocio_detalle": "Consultas sobre horarios, disponibilidad de productos y promociones",
     "canales_deseados": ["WhatsApp"],
-    "canal_no_soportado_solicitado": [],
+    "canales_no_soportados_solicitados": [],
     "casos_uso_principales": ["Atencion Al Cliente", "Catalogo De Productos"],
     "integraciones_requeridas": []
   },
   "intencion_compra": {
     "dolor_explicito": true,
-    "urgencia": "no_inferible",
+    "urgencia": null,
     "complejidad_tecnica": "Media",
     "objeciones_principales": [],
     "tono_deseado": "Amable",
@@ -83,8 +73,8 @@ Extracción esperada:
   "perfil_cliente": {
     "industria": "Salud, Bienestar y Fitness",
     "sector_b2b_b2c": "B2C",
-    "tamano_empresa": "no_inferible",
-    "decisor_identificado": "no_mencionado",
+    "tamano_empresa": null,
+    "decisor_identificado": null,
     "volumen_consultas_mensual": 400,
     "canal_descubrimiento": "Google",
     "tipo_canal": "Busqueda Organica"
@@ -93,16 +83,16 @@ Extracción esperada:
     "area_negocio_principal": "Atencion al Cliente",
     "area_negocio_detalle": "Consultas sobre síntomas, medicamentos, turnos de urgencia y vacunaciones; refuerzo en fines de semana",
     "canales_deseados": [],
-    "canal_no_soportado_solicitado": [],
+    "canales_no_soportados_solicitados": [],
     "casos_uso_principales": ["Triaje De Emergencias", "Agendamiento"],
     "integraciones_requeridas": ["Historial Clínico de Mascotas"]
   },
   "intencion_compra": {
     "dolor_explicito": true,
-    "urgencia": "no_inferible",
+    "urgencia": null,
     "complejidad_tecnica": "Alta",
     "objeciones_principales": [],
-    "tono_deseado": "no_mencionado",
+    "tono_deseado": null,
     "requiere_regulacion_compleja": true,
     "requiere_sistema_gestion_completo": false
   }

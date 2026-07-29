@@ -45,7 +45,7 @@ def get_existing_taxonomies(db: Client) -> ExistingTaxonomies:
     rows = list(
         paginate(
             lambda: db.table("clients").select(
-                "industria, canales_deseados, integraciones_requeridas, casos_uso_principales"
+                "casos_uso_principales, canales_no_soportados_solicitados"
             ).order("fecha_reunion", desc=True).order("id")
         )
     )
@@ -54,14 +54,11 @@ def get_existing_taxonomies(db: Client) -> ExistingTaxonomies:
         return sorted({v for lst in lists if lst for v in lst})
 
     return ExistingTaxonomies(
-        canales_deseados=uniq_flat(
-            [r.get("canales_deseados") for r in rows]
-        ),
-        integraciones_requeridas=uniq_flat(
-            [r.get("integraciones_requeridas") for r in rows]
-        ),
         casos_uso_principales=uniq_flat(
             [r.get("casos_uso_principales") for r in rows]
+        ),
+        canales_no_soportados_solicitados=uniq_flat(
+            [r.get("canales_no_soportados_solicitados") for r in rows]
         ),
     )
 

@@ -68,13 +68,30 @@ class PerfilCliente(BaseModel):
         description="Modelo de negocio. Null si no se puede determinar.",
     )
     tamano_empresa: Literal["Pequeña", "Mediana", "Grande"] | None = Field(default=None, description="Tamaño de la empresa. Null si no se puede determinar.")
-    decisor_identificado: str | None = Field(
+    decisor_identificado: Literal[
+        "Dueño",
+        "Director",
+        "Gerente",
+        "Administrador",
+        "Coordinador",
+        "Consultor",
+        "Vendedor",
+        "Responsable",
+        "Especialista",
+        "Otro",
+    ] | None = Field(
         default=None,
-        description="Cargo general del responsable (ej. 'Gerente', 'Dueño', 'Administrador', 'Gestor'). Nunca incluir calificativos ni especializaciones como 'Gestor de clínica'. Null si no se puede determinar.",
+        description=(
+            "Cargo general del responsable MAPEADO a una de las categorías del enum. "
+            "NUNCA devuelvas el cargo literal de la transcripción (ej. 'Gestor de clínica'). "
+            "Aplica las reglas de consolidación del prompt. "
+            "Si no se menciona ningún cargo, usa null. "
+            "Si el cargo no calza en ninguna categoría, usa 'Otro'."
+        ),
     )
     volumen_consultas_mensual: int | None = Field(
         default=None,
-        description="Número estimado de consultas mensuales (entero). Null si no es calculable.",
+        description="Número estimado de consultas mensuales (entero). 'X diarias'→×30, 'X semanales'→×4, rango→promedio. Null si no es calculable.",
     )
     canal_descubrimiento: str | None = Field(
         default=None,
@@ -133,7 +150,7 @@ class NecesidadesYCasosUso(BaseModel):
     )
     canales_no_soportados_solicitados: list[str] = Field(
         default_factory=list,
-        description="Canales que el cliente pidió explícitamente pero que Vambe no soporta hoy (ej. 'Telegram', 'SMS', 'Email'). Lista vacía si no aplica o si todos los canales pedidos ya están soportados.",
+        description="Canales que el cliente pidió explícitamente pero que Vambe no soporta hoy (ej. 'Telegram', 'SMS', 'Email'). Lista vacía si no aplica o si todos los canales pedidos ya están soportados. Usa valores de la lista de <categorias_existentes> si aplica. Solo crea una nueva etiqueta si el canal no calza con ninguna existente.",
     )
     casos_uso_principales: list[str] = Field(
         default_factory=list,
@@ -162,7 +179,7 @@ class NecesidadesYCasosUso(BaseModel):
 class IntencionCompra(BaseModel):
     dolor_explicito: bool | None = Field(
         default=None,
-        description="True ÚNICAMENTE si hay lenguaje explícito de crisis o colapso ('caótico', 'no damos abasto'). False para cualquier otro problema común. Null si no se puede determinar.",
+        description="True ÚNICAMENTE si hay lenguaje explícito de crisis o colapso ('caótico', 'no damos abasto', 'colapsados', etc.). False para cualquier otro problema común. Null si no se puede determinar.",
     )
     urgencia: Literal["Alta", "Media", "Baja"] | None = Field(default=None)
     complejidad_tecnica: Literal["Baja", "Media", "Alta"] | None = Field(default=None)
@@ -184,11 +201,11 @@ class IntencionCompra(BaseModel):
     )
     tono_deseado: str | None = Field(
         default=None,
-        description="Únicamente un adjetivo general en su forma básica (ej. 'Profesional', 'Cercano', 'Formal'). Nunca una frase ni adjetivos específicos del rubro.",
+        description="Únicamente un adjetivo general en su forma básica (ej. 'Profesional', 'Cercano', 'Formal'). Nunca una frase ni adjetivos específicos del rubro. Si no se menciona, null.",
     )
     requiere_regulacion_compleja: bool | None = Field(
         default=None,
-        description="True solo si opera en sector regulado (salud, legal) Y el caso de uso toca esa regulación. Null si no aplica/inferible.",
+        description="True solo si opera en sector regulado (salud, legal) Y el caso de uso toca esa regulación (Ej.: agendar citas en una clínica es false). Null si no aplica/inferible.",
     )
     requiere_sistema_gestion_completo: bool | None = Field(
         default=None,

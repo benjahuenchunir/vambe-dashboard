@@ -59,7 +59,8 @@ export function computeCanalesDemanda(clients: ClientAnalysis[]): CanalDemanda[]
 
   return [...counts.entries()]
     .map(([canal, v]) => ({ canal, total: v.count, porcentaje: pct(v.count, clients.length), soportado: v.soportado }))
-    .sort((a, b) => b.total - a.total);
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
 }
 
 export function computeObjecionesFrecuentes(clients: ClientAnalysis[]) {
