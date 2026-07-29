@@ -20,6 +20,8 @@ class Settings:
     supabase_service_role_key: str
     gemma_model: str
     csv_path: str
+    pipeline_api_secret: str
+    allowed_origins: list[str]
 
 
 def load_settings() -> Settings:
@@ -29,4 +31,6 @@ def load_settings() -> Settings:
         supabase_service_role_key=_require("SUPABASE_SERVICE_ROLE_KEY"),
         gemma_model=os.environ.get("GEMMA_MODEL", "gemma-4-26b-a4b-it"),
         csv_path=os.environ.get("CSV_PATH", "vambe_clients_10k.csv"),
+        pipeline_api_secret=os.environ.get("PIPELINE_API_SECRET", "default_secret"),
+        allowed_origins=os.environ.get("ALLOWED_ORIGINS", "").split(","),
     )

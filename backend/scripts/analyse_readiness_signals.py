@@ -7,14 +7,14 @@ a mano, sin verificar contra los resultados reales. Este script calcula el
 lift real (tasa de cierre del grupo - tasa de cierre general) de cada señal
 candidata, para poder recalibrar los pesos con datos en vez de intuición.
 
-Uso: python -m precompute.analyze_readiness_signals
+Uso: python -m processing.analyze_readiness_signals
 """
 
 from collections import defaultdict
 
-from precompute import db
-from precompute.config import load_settings
-from precompute.scoring import normalize_text, SUPPORTED_CHANNELS
+from data import db
+from config import load_settings
+from services.scoring import normalize_text, SUPPORTED_CHANNELS
 
 MIN_SAMPLE = 15  # ignora grupos con muy pocos casos, poco confiables
 

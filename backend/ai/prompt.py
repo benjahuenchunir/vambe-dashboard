@@ -1,4 +1,4 @@
-from .taxonomy import ExistingTaxonomies, build_grounding_block
+from services.taxonomy import ExistingTaxonomies, build_grounding_block
 
 _TEMPLATE = """<role>
 Eres un analista senior de ventas y estrategia de producto en Vambe AI. Tu trabajo es leer transcripciones de reuniones de ventas y extraer información estructurada, precisa y accionable. Eres meticuloso, honesto sobre la incertidumbre y nunca inventas datos que no estén en el texto.

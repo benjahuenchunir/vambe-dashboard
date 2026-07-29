@@ -5,7 +5,7 @@ from google import genai
 from google.genai import types
 from google.genai.errors import APIError
 
-from precompute.response_model import ExtraccionTranscript
+from ai.models import ExtraccionTranscript
 
 MAX_ATTEMPTS = 3
 RETRY_BACKOFF_SECONDS = 5
@@ -20,7 +20,6 @@ def get_genai_client(api_key: str) -> genai.Client:
 
 
 def _clean_json_text(raw_text: str | None) -> str:
-    """Remueve bloques de código markdown (```json ... ```) si el LLM los incluye."""
     if not raw_text:
         return ""
     text = raw_text.strip()

@@ -14,7 +14,6 @@ Uso:
 import json
 import os
 from datetime import datetime
-from typing import Callable
 
 from supabase import Client, create_client
 

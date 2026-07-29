@@ -12,7 +12,6 @@ class CsvRow:
     transcripcion: str
 
 
-# The sample CSV uses these exact headers. Adjust here if the real file differs.
 COLUMN_MAP = {
     "id": "ID",
     "nombre": "Nombre",
@@ -24,18 +23,10 @@ COLUMN_MAP = {
 
 
 def read_csv_rows(path: str) -> list[CsvRow]:
-    """Reads the CSV with a UTF-8-first, Latin-1-fallback strategy (the sample
-    file has mojibake like 'RodrÃ­guez', suggesting inconsistent encoding)."""
-    for encoding in ("utf-8-sig", "latin-1"):
-        try:
-            with open(path, encoding=encoding, newline="") as f:
-                reader = csv.DictReader(f)
-                rows = [_parse_row(i, row) for i, row in enumerate(reader)]
-            return rows
-        except UnicodeDecodeError:
-            continue
-    raise RuntimeError(f"No se pudo leer {path} ni como utf-8-sig ni como latin-1.")
-
+    with open(path, encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        rows = [_parse_row(i, row) for i, row in enumerate(reader)]
+    return rows
 
 def _parse_row(index: int, row: dict) -> CsvRow:
     return CsvRow(

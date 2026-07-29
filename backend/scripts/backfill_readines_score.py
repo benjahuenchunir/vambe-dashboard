@@ -3,12 +3,12 @@ Recalcula vambe_readiness_score para todas las filas ya existentes, usando
 raw_extraction (la respuesta cruda del LLM ya guardada) — no vuelve a llamar
 a la API. Corre esto una vez después de actualizar los pesos en scoring.py.
 
-Uso: python -m precompute.backfill_readiness_score
+Uso: python -m processing.backfill_readiness_score
 """
 
-from precompute import db
-from precompute.config import load_settings
-from precompute.scoring import compute_readiness_score
+from data import db
+from config import load_settings
+from services.scoring import compute_readiness_score
 
 
 def main() -> None:
