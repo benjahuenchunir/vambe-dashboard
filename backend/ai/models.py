@@ -183,20 +183,25 @@ class IntencionCompra(BaseModel):
     )
     urgencia: Literal["Alta", "Media", "Baja"] | None = Field(default=None)
     complejidad_tecnica: Literal["Baja", "Media", "Alta"] | None = Field(default=None)
-    objeciones_principales: list[str] = Field(
+    objeciones_principales: list[
+        Literal[
+            "Precio / Presupuesto",
+            "Precisión y Confiabilidad de la IA",
+            "Privacidad / Seguridad de Datos",
+            "Tiempo de Implementación",
+            "Complejidad Técnica / Integración",
+            "Resistencia al Cambio del Equipo",
+            "Capacidad de Personalización",
+            "Cumplimiento Normativo",
+            "Calidad de Interacción",
+            "Otro",
+        ]
+    ] = Field(
         default_factory=list,
         description=(
-            "Lista de dudas, preocupaciones o barreras expresadas por el cliente.\n"
-            "REGLA DE FORMATO: Resume y sintetiza cada punto en una CATEGORÍA GENERAL breve (2 a 4 palabras).\n"
-            "Ejemplos de categorías generales:\n"
-            "- 'Precio / Presupuesto'\n"
-            "- 'Temor a Alucinaciones de IA'\n"
-            "- 'Tiempo de Implementación'\n"
-            "- 'Privacidad / Seguridad de Datos'\n"
-            "- 'Falta de Canal / Integración'\n"
-            "- 'Resistencia al Cambio del Equipo'\n"
-            "- 'Complejidad de Integración'\n"
-            "- 'Capacidad de personalización'\n"
+            "Lista de objeciones expresadas por el cliente, MAPEADAS a las categorías del enum. "
+            "NUNCA inventes una categoría nueva. Si la objeción no calza exactamente, elige la más cercana. "
+            "Si no hay objeciones, devuelve []."
         ),
     )
     tono_deseado: str | None = Field(
