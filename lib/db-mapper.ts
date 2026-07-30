@@ -1,5 +1,3 @@
-// db_mapper.ts — Maps Supabase rows (snake_case) <-> Domain model (camelCase)
-
 import type { ClientAnalysis } from "./types";
 
 /** Exact shape of the Supabase `clients` table (see schema.sql). */
@@ -28,6 +26,7 @@ export interface ClientRow {
   area_negocio_detalle: string | null;
   canales_deseados: string[];
   casos_uso_principales: string[];
+  casos_uso_nuevos: string[];
   integraciones_requeridas: string[];
 
   // intencion_compra
@@ -39,16 +38,13 @@ export interface ClientRow {
   requiere_regulacion_compleja: boolean | null;
   requiere_sistema_gestion_completo: boolean | null;
 
-  // Derivado en Python
   vambe_readiness_score: number | null;
   canales_no_soportados: string[];
-  casos_uso_nuevos: string[];
   integraciones_nuevas: string[];
   raw_extraction: unknown;
   canales_no_soportados_solicitados: string[];
 }
 
-/** Converts a DB row into the domain model used by the dashboard. */
 export function rowToClient(row: ClientRow): ClientAnalysis {
   return {
     id: row.id,

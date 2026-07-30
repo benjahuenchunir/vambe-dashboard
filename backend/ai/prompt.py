@@ -37,8 +37,8 @@ No existe una lista cerrada de industrias, casos de uso ni integraciones: usa el
 Transcripción: "Recibimos entre 800 y 1500 consultas diarias por WhatsApp sobre horarios, disponibilidad de productos y promociones. El volumen es insostenible para nuestro equipo actual. Conocí Vambe a través de LinkedIn mientras buscaba soluciones de automatización. Lo que realmente necesitamos es un chatbot que entienda el contexto de nuestro catálogo, que maneje múltiples canales y que pueda derivar consultas complejas a un humano cuando sea necesario. Además, es importante que mantenga el tono amable de nuestra marca."
 
 Extracción esperada:
-{
-  "perfil_cliente": {
+{{
+  "perfil_cliente": {{
     "industria": "Retail, Comercio y E-commerce",
     "sector_b2b_b2c": "B2C",
     "tamano_empresa": null,
@@ -46,16 +46,18 @@ Extracción esperada:
     "volumen_consultas_mensual": 34500,
     "canal_descubrimiento": "LinkedIn",
     "tipo_canal": "Organico Social"
-  },
-  "necesidades_y_casos_uso": {
+  }},
+  "necesidades_y_casos_uso": {{
     "area_negocio_principal": "Atencion al Cliente",
     "area_negocio_detalle": "Consultas sobre horarios, disponibilidad de productos y promociones",
     "canales_deseados": ["WhatsApp"],
     "canales_no_soportados_solicitados": [],
-    "casos_uso_principales": ["Atencion Al Cliente", "Catalogo De Productos"],
-    "integraciones_requeridas": []
-  },
-  "intencion_compra": {
+    "casos_uso_principales": ["Información y Consultas", "Presentación de Contenidos"],
+    "casos_uso_nuevos": [],
+    "integraciones_requeridas": [],
+    "integraciones_nuevas": []
+  }},
+  "intencion_compra": {{
     "dolor_explicito": true,
     "urgencia": null,
     "complejidad_tecnica": "Media",
@@ -63,14 +65,14 @@ Extracción esperada:
     "tono_deseado": "Amable",
     "requiere_regulacion_compleja": false,
     "requiere_sistema_gestion_completo": false
-  }
-}
+  }}
+}}
 
 Transcripción: "Somos una veterinaria con especialidad en animales de compañía ubicada en Las Condes. Recibimos aproximadamente 400 llamadas mensuales sobre síntomas, medicamentos, turnos de urgencia y vacunaciones. El equipo está sobrecargado especialmente en fines de semana. Descubrí Vambe mientras buscaba en Google soluciones para veterinarias. Necesito un chatbot que pueda triaje de emergencias, que dé orientación básica sin reemplazar la consulta veterinaria, que confirme citas y que maneje información de historiales de mascotas."
 
 Extracción esperada:
-{
-  "perfil_cliente": {
+{{
+  "perfil_cliente": {{
     "industria": "Salud, Bienestar y Fitness",
     "sector_b2b_b2c": "B2C",
     "tamano_empresa": null,
@@ -78,16 +80,18 @@ Extracción esperada:
     "volumen_consultas_mensual": 400,
     "canal_descubrimiento": "Google",
     "tipo_canal": "Busqueda Organica"
-  },
-  "necesidades_y_casos_uso": {
+  }},
+  "necesidades_y_casos_uso": {{
     "area_negocio_principal": "Atencion al Cliente",
     "area_negocio_detalle": "Consultas sobre síntomas, medicamentos, turnos de urgencia y vacunaciones; refuerzo en fines de semana",
     "canales_deseados": [],
     "canales_no_soportados_solicitados": [],
-    "casos_uso_principales": ["Triaje De Emergencias", "Agendamiento"],
-    "integraciones_requeridas": ["Historial Clínico de Mascotas"]
-  },
-  "intencion_compra": {
+    "casos_uso_principales": ["Agendamiento y Reservas", "Otro"],
+    "casos_uso_nuevos": ["Triaje De Emergencias"],
+    "integraciones_requeridas": ["Calendario / Agendamiento"],
+    "integraciones_nuevas": []
+  }},
+  "intencion_compra": {{
     "dolor_explicito": true,
     "urgencia": null,
     "complejidad_tecnica": "Alta",
@@ -95,8 +99,8 @@ Extracción esperada:
     "tono_deseado": null,
     "requiere_regulacion_compleja": true,
     "requiere_sistema_gestion_completo": false
-  }
-}
+  }}
+}}
 </ejemplos>
 
 <transcripcion>

@@ -10,13 +10,9 @@ from data import db
 from data.csv_source import CsvRow, read_csv_rows
 from ai import llm
 from ai.prompt import build_prompt
-from services.scoring import (
-    KNOWN_CASOS_USO,
-    KNOWN_INTEGRACIONES,
-    compute_readiness_score,
-    derive_new_labels,
-)
+from services.scoring import compute_readiness_score
 from services.taxonomy import reconcile_list, _fold
+import traceback
 from app.state import _state, _state_lock, _taxonomy_lock
 
 
@@ -41,36 +37,36 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
     necesidades = extraction["necesidades_y_casos_uso"]
     intencion = extraction["intencion_compra"]
 
-    raw_canales = necesidades.get("canales_deseados") or []
-    raw_integraciones = necesidades.get("integraciones_requeridas") or []
-    raw_casos_uso = necesidades.get("casos_uso_principales") or []
+    raw_integraciones_nuevas = necesidades.get("integraciones_nuevas") or []
+    raw_casos_uso_nuevos = necesidades.get("raw_casos_uso_nuevos") or []
     raw_objeciones = intencion.get("objeciones_principales") or []
     canales_no_soportados_solicitados = (
         necesidades.get("canales_no_soportados_solicitados") or []
     )
 
-    canales_deseados = reconcile_list(raw_canales, taxonomies.canales_deseados)
-    integraciones_requeridas = reconcile_list(
-        raw_integraciones, taxonomies.integraciones_requeridas
+    integraciones_nuevas = reconcile_list(
+        raw_integraciones_nuevas, taxonomies.integraciones_nuevas
     )
-    casos_uso_principales = reconcile_list(
-        raw_casos_uso, taxonomies.casos_uso_principales
+    casos_uso_nuevos = reconcile_list(
+        raw_casos_uso_nuevos, taxonomies.casos_uso_nuevos
     )
     canales_no_soportados_solicitados = reconcile_list(
         canales_no_soportados_solicitados, taxonomies.canales_no_soportados_solicitados
     )
-
-    _extend_unique(taxonomies.casos_uso_principales, casos_uso_principales)
+    _extend_unique(taxonomies.casos_uso_nuevos, casos_uso_nuevos)
     _extend_unique(taxonomies.canales_no_soportados_solicitados, canales_no_soportados_solicitados)
+    _extend_unique(taxonomies.integraciones_nuevas, integraciones_nuevas)
 
     reconciled_extraction = {
         **extraction,
         "perfil_cliente": {**perfil, "industria": perfil["industria"]},
         "necesidades_y_casos_uso": {
             **necesidades,
-            "canales_deseados": canales_deseados,
-            "integraciones_requeridas": integraciones_requeridas,
-            "casos_uso_principales": casos_uso_principales,
+            "canales_deseados": necesidades.get("canales_deseados"),
+            "integraciones_requeridas": necesidades.get("integraciones_requeridas"),
+            "integraciones_nuevas": integraciones_nuevas,
+            "casos_uso_principales": necesidades.get("casos_uso_principales"),
+            "casos_uso_nuevos": casos_uso_nuevos,
         },
     }
 
@@ -92,10 +88,12 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
         "tipo_canal": perfil["tipo_canal"],
         "area_negocio_principal": necesidades["area_negocio_principal"],
         "area_negocio_detalle": necesidades["area_negocio_detalle"],
-        "canales_deseados": canales_deseados,
+        "canales_deseados": necesidades.get("canales_deseados"),
         "canales_no_soportados_solicitados": canales_no_soportados_solicitados,
-        "casos_uso_principales": casos_uso_principales,
-        "integraciones_requeridas": integraciones_requeridas,
+        "casos_uso_principales": necesidades.get("casos_uso_principales"),
+        "casos_uso_nuevos": casos_uso_nuevos,
+        "integraciones_requeridas": necesidades.get("integraciones_requeridas"),
+        "integraciones_nuevas": integraciones_nuevas,
         "dolor_explicito": intencion["dolor_explicito"],
         "urgencia": intencion["urgencia"],
         "complejidad_tecnica": intencion["complejidad_tecnica"],
@@ -106,10 +104,6 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
             "requiere_sistema_gestion_completo"
         ),
         "vambe_readiness_score": compute_readiness_score(reconciled_extraction),
-        "casos_uso_nuevos": derive_new_labels(casos_uso_principales, KNOWN_CASOS_USO),
-        "integraciones_nuevas": derive_new_labels(
-            integraciones_requeridas, KNOWN_INTEGRACIONES
-        ),
         "raw_extraction": extraction,
     }
 
@@ -117,8 +111,19 @@ def _build_record(row: CsvRow, extraction: dict, taxonomies) -> dict:
 def _process_single_row(
     row: CsvRow, settings, genai_client, supabase, taxonomies
 ) -> None:
+    # Early exit: si ya pidieron parar antes de que este hilo arranque, salimos
+    with _state_lock:
+        if _state["stop_requested"]:
+            raise RuntimeError("Stop requested before LLM call")
+
     with _taxonomy_lock:
         prompt = build_prompt(row.transcripcion, taxonomies)
+        print(prompt)
+
+    # Segunda verificación justo antes del LLM (la parte más cara)
+    with _state_lock:
+        if _state["stop_requested"]:
+            raise RuntimeError("Stop requested before LLM call")
 
     extraction = llm.categorize_transcript(genai_client, settings.gemma_model, prompt)
 
@@ -140,7 +145,7 @@ def init_pipeline_state() -> dict:
         )
         all_rows = read_csv_rows(settings.csv_path)
         processed_ids = db.get_processed_csv_row_ids(supabase)
-        
+
         _update_state(
             total_csv=len(all_rows),
             total_global_processed=len(processed_ids),
@@ -159,13 +164,8 @@ def init_pipeline_state() -> dict:
 
 
 def run_pipeline(limit: Optional[int], workers: int) -> None:
-    """
-    Orquesta el pipeline completo en background.
-    
-    Args:
-        limit: Max filas a procesar. 0 o None = sin limite (todas las pendientes).
-        workers: Hilos paralelos para llamadas al LLM.
-    """
+    executor: ThreadPoolExecutor | None = None
+
     try:
         settings = load_settings()
         supabase = db.get_client(
@@ -178,14 +178,13 @@ def run_pipeline(limit: Optional[int], workers: int) -> None:
         processed_ids = db.get_processed_csv_row_ids(supabase)
         total_csv = len(all_rows)
         total_global_processed = len(processed_ids)
-        
+
         # 2. Calcular pendientes y aplicar limit
-        # limit=0 o None = sin limite (procesar todo lo pendiente)
         pending = [r for r in all_rows if r.csv_row_id not in processed_ids]
         if limit and limit > 0:
             pending = pending[:limit]
         total_lote = len(pending)
-        
+
         print(f"Pipeline: {total_lote} filas en este lote (total CSV: {total_csv}, ya procesadas: {total_global_processed}).")
 
         # 3. Inicializar estado del lote
@@ -212,25 +211,32 @@ def run_pipeline(limit: Optional[int], workers: int) -> None:
         for i in range(0, len(pending), workers):
             with _state_lock:
                 if _state["stop_requested"]:
-                    print("Pipeline: detencion solicitada, terminando tanda en curso...")
+                    print("Pipeline: detencion solicitada antes de iniciar tanda.")
                     break
 
             tanda = pending[i : i + workers]
-            with ThreadPoolExecutor(max_workers=workers) as executor:
-                futures = {
-                    executor.submit(
-                        _process_single_row,
-                        row,
-                        settings,
-                        genai_client,
-                        supabase,
-                        taxonomies,
-                    ): row
-                    for row in tanda
-                }
+
+            # NO usamos context manager para poder hacer shutdown(wait=False)
+            executor = ThreadPoolExecutor(max_workers=workers)
+            futures = {
+                executor.submit(
+                    _process_single_row,
+                    row,
+                    settings,
+                    genai_client,
+                    supabase,
+                    taxonomies,
+                ): row
+                for row in tanda
+            }
+
+            stopped_early = False
+
+            try:
                 for future in as_completed(futures):
                     with _state_lock:
                         _state["processed"] += 1
+
                     try:
                         future.result()
                         with _state_lock:
@@ -239,13 +245,32 @@ def run_pipeline(limit: Optional[int], workers: int) -> None:
                     except Exception as error:  # noqa: BLE001
                         with _state_lock:
                             _state["failed"] += 1
-                        print(f"[ERROR] fila fallo: {error}")
+                        # Solo loguear si NO fue por stop requested
+                        if "Stop requested" not in str(error):
+                            print(traceback.format_exc())
+                            print(f"[ERROR] fila fallo: {error}")
 
-        # 5. Finalizar: actualizar total_global_processed
+                    # Verificar stop inmediatamente después de cada completado
+                    with _state_lock:
+                        if _state["stop_requested"]:
+                            stopped_early = True
+                            break
+
+            finally:
+                # Cancelar futures que aun no empezaron y NO esperar a los que corren
+                if executor:
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    executor = None
+
+            if stopped_early:
+                print("Pipeline: detencion inmediata ejecutada.")
+                break
+
+        # 5. Finalizar
         with _state_lock:
             _state["running"] = False
             _state["stop_requested"] = False
-            print(f"Pipeline finalizado. {_state["succeeded"]} exitosas, {_state['failed']} fallidas.")
+            print(f"Pipeline finalizado. {_state['succeeded']} exitosas, {_state['failed']} fallidas.")
 
     except Exception as error:  # noqa: BLE001
         print(f"[ERROR CRITICO] Pipeline fallo: {error}")
@@ -254,3 +279,7 @@ def run_pipeline(limit: Optional[int], workers: int) -> None:
             stop_requested=False,
             error=str(error),
         )
+    finally:
+        # Seguro por si quedo colgado
+        if executor:
+            executor.shutdown(wait=False, cancel_futures=True)

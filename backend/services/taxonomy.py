@@ -57,19 +57,27 @@ def reconcile_list(raw_labels: list[str], existing: list[str]) -> list[str]:
 
 @dataclass
 class ExistingTaxonomies:
-    casos_uso_principales: list[str] = field(default_factory=list)
+    casos_uso_nuevos: list[str] = field(default_factory=list)
+    integraciones_nuevas: list[str] = field(default_factory=list)
     canales_no_soportados_solicitados: list[str] = field(default_factory=list)
 
 
 def build_grounding_block(t: ExistingTaxonomies) -> str:
     def section(label: str, values: list[str]) -> str:
-        return f"{label}: {', '.join(values[:40])}" if values else f"{label}: (ninguna todavía)"
+        return (
+            f"{label}: {', '.join(values[:30])}"
+            if values
+            else f"{label}: (ninguna todavía)"
+        )
 
     return "\n".join(
         [
             "Categorías ya utilizadas en registros previos — reutiliza una si la transcripción calza,",
             "o crea una nueva corta y genérica si no calza:",
-            section("casos_uso_principales", t.casos_uso_principales),
-            section("canales_no_soportados_solicitados", t.canales_no_soportados_solicitados),
+            section("casos_uso_nuevos", t.casos_uso_nuevos),
+            section("integraciones_nuevas", t.integraciones_nuevas),
+            section(
+                "canales_no_soportados_solicitados", t.canales_no_soportados_solicitados
+            ),
         ]
     )

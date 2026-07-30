@@ -1,13 +1,5 @@
 import type { PipelineStatus } from "./types";
 
-/**
- * Client para el pipeline externo de categorización (FastAPI, ver api.py).
- * Espejo del rol de lib/store.ts pero para el estado del pipeline en vez de
- * los datos de Supabase — separados a propósito: store.ts solo conoce
- * Supabase, este archivo solo conoce la API del pipeline. Ninguno necesita
- * saber que el otro existe.
- */
-
 function mapStatus(raw: any): PipelineStatus {
   return {
     running: raw.running,

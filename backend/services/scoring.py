@@ -1,40 +1,6 @@
 import unicodedata
 from typing import Any
 
-KNOWN_CASOS_USO: set[str] = {
-    "Agendamiento",
-    "Catalogo De Productos",
-    "Cotizacion",
-    "Reservas",
-    "Atencion Al Cliente",
-    "Calificacion De Leads",
-    "Seguimiento De Ventas",
-    "Procesamiento De Pagos",
-    "Llamadas Con Ia",
-    "Crm Integracion",
-    "Recomendaciones",
-    "Recordatorios",
-    "Objeciones",
-    "Upsell",
-    "Postventa",
-    "Recompra",
-    "Reactivacion De Clientes",
-}
-
-KNOWN_INTEGRACIONES: set[str] = {
-    "CRM",
-    "ERP",
-    "Calendario / Agendamiento",
-    "Pasarela de Pagos",
-    "Ecommerce",
-    "Sistema Académico / LMS",
-    "Facturación / DTE",
-    "Inventario / Stock",
-    "Helpdesk / Atención al Cliente",
-    "Marketing Automation",
-    "API / Webhook",
-}
-
 def normalize_text(text: str) -> str:
     """Elimina tildes, diacríticos, espacios extra y convierte a minúsculas."""
     if not text:
@@ -79,61 +45,74 @@ def derive_new_labels(values: list[str], known: set[str]) -> list[str]:
 # marcados como muestra chica o sin datos todavía.
 # ---------------------------------------------------------------------------
 
-BASELINE_TASA_CIERRE = 69  # 69.3% medido en n=5033
+BASELINE_TASA_CIERRE = 69  # tasa de cierre general medida (redondeada)
 
 VOLUMEN_WEIGHTS: dict[str, int] = {
-    "0-49": -12,       # n=161,  tasa 57.1% (lift -12.2pp)
-    "50-199": -7,      # n=904,  tasa 62.6% (lift -6.7pp)
-    "500-1999": 0,     # n=1294, tasa 68.9% (lift -0.4pp ~ baseline)
-    "200-499": 2,      # n=1354, tasa 70.8% (lift +1.5pp)
-    "2000-9999": 3,    # n=871,  tasa 72.4% (lift +3.1pp)
-    "10000+": 9,       # n=449,  tasa 78.2% (lift +8.9pp)
+    "0-49": -10,      # n=44,  tasa 59.1%
+    "50-199": -9,     # n=320, tasa 60.6%
+    "500-1999": -3,   # n=559, tasa 66.5%
+    "200-499": 5,     # n=515, tasa 74.6%
+    "2000-9999": 4,   # n=333, tasa 73.6%
+    "10000+": 5,      # n=168, tasa 74.4%
 }
 
 TAMANO_EMPRESA_WEIGHTS = {
-    "Grande": 7,       # n=301,  tasa 76.4% (lift +7.1pp)
-    "Mediana": 4,      # n=730,  tasa 73.7% (lift +4.4pp)
-    None: 0,           # n=3342, tasa 69.1% (lift -0.2pp ~ baseline)
-    "Pequeña": -7,     # n=660,  tasa 62.7% (lift -6.6pp)
+    "Grande": 6,          # n=156,  tasa 75.0%
+    "Mediana": 2,         # n=314,  tasa 71.7%
+    None: -1,   # n=1241, tasa 68.5%
+    "Pequeña": -2,        # n=228,  tasa 67.5%
 }
 
 TIPO_CANAL_WEIGHTS: dict[str, int] = {
-    "Referido": 7,                     # n=1148, tasa 76.0% (lift +6.7pp)
-    "Outbound / Contacto Directo": 3,   # n=163,  tasa 71.8% (lift +2.5pp)
-    "Eventos y Webinars": 1,           # n=1164, tasa 70.7% (lift +1.4pp)
-    "Organico Social": 0,              # n=750,  tasa 69.2% (lift -0.1pp)
-    "Busqueda Organica": -2,           # n=521,  tasa 67.6% (lift -1.7pp)
-    "Marketing de Contenidos": -5,     # n=740,  tasa 64.6% (lift -4.7pp)
-    "Medios / Prensa": -8,             # n=266,  tasa 61.7% (lift -7.6pp)
-    "Publicidad Paga": -10,            # n=174,  tasa 59.8% (lift -9.5pp)
-    "Otro": -15,                       # n=94,   tasa 52.1% (lift -17.2pp)
+    "Outbound / Contacto Directo": 5,  # n=67,  tasa 74.6%
+    "Referido": 5,                     # n=434, tasa 74.0%
+    "Eventos y Webinars": 2,           # n=446, tasa 70.9%
+    "Organico Social": 1,              # n=287, tasa 70.7%
+    "Busqueda Organica": -2,           # n=208, tasa 67.3%
+    "Marketing de Contenidos": -3,     # n=277, tasa 66.1%
+    "Medios / Prensa": -7,             # n=95,  tasa 62.1%
+    "Publicidad Paga": -8,             # n=67,  tasa 61.2%
+    "Otro": -15,                       # n=46,  tasa 50.0% (lift real -19.4pp;
+                                        # se amortigua un poco por ser el
+                                        # segmento más chico entre los medidos)
 }
 
 AREA_NEGOCIO_WEIGHTS: dict[str, int] = {
-    "Agendamiento": 1,       # n=1360, tasa 70.3% (lift +1.0pp)
-    "Ecommerce": 1,          # n=578,  tasa 70.2% (lift +0.9pp)
-    "Atencion al Cliente": 0, # n=1443, tasa 69.1% (lift -0.2pp)
-    "Venta Consultiva": -1,  # n=1650, tasa 68.4% (lift -0.9pp)
+    "Agendamiento": 3,          # n=522, tasa 72.0%
+    "Atencion al Cliente": 0,   # n=577, tasa 69.7% (~ igual al promedio)
+    "Ecommerce": -1,            # n=210, tasa 68.1%
+    "Venta Consultiva": -2,     # n=629, tasa 67.4%
 }
 
 URGENCIA_WEIGHTS: dict[str, int] = {
-    "Alta": 13,   # n=162, tasa 82.1% (lift +12.8pp) — señal muy fuerte
-    "Media": 5,   # n=218, tasa 74.3% (lift +5.0pp)
-    None: 0,      # n=4649, ~92% del dataset, actúa como baseline
+    "Alta": 6,   # n=49, tasa 75.5%
+    "Media": 2,  # n=70, tasa 71.4%
+    # "Baja" y None no se les asigna puntaje: None es ~94%
+    # del dataset (el LLM rara vez logra inferir urgencia con confianza), así
+    # que casi no aporta señal real todavía.
 }
 
 COMPLEJIDAD_WEIGHTS = {
-    None: 1,      # n=3724, tasa 70.2% (lift +0.9pp)
-    "Media": -2,  # n=658,  tasa 67.5% (lift -1.8pp)
-    "Baja": -2,   # n=527,  tasa 67.4% (lift -1.9pp)
-    "Alta": -6,   # n=124,  tasa 62.9% (lift -6.4pp)
+    None: 1,  # n=1445, tasa 70.6%
+    "Baja": 1,          # n=191,  tasa 70.2%
+    "Alta": -4,         # n=63,   tasa 65.1%
+    "Media": -6,        # n=240,  tasa 62.9% — la fórmula anterior le daba
+                         # +10 a "Baja o Media" combinados; los datos
+                         # muestran que Media es en realidad la peor banda.
 }
 
-DOLOR_EXPLICITO_LIFT = 9         # Con: n=299, tasa 78.6% (lift +9.3pp)
-REGULACION_COMPLEJA_LIFT = 3     # Con: n=619, tasa 72.4% (lift +3.1pp)
-SISTEMA_COMPLETO_PENALTY = -10   # Sin casos aún en el dataset (n=0). Se mantiene supuesto.
-CANAL_SOPORTADO_LIFT = 0         # Con: n=4507, tasa 69.6% (lift +0.3pp ~ baseline)
-CANAL_NO_SOPORTADO_PENALTY = -2  # Sin: n=526,  tasa 67.1% (lift -2.2pp)
+DOLOR_EXPLICITO_LIFT = 8         # Con: n=118, tasa 77.1% (vs. Sin: 68.9%)
+REGULACION_COMPLEJA_LIFT = 3     # Con: n=220, tasa 72.3% — la fórmula
+                                  # anterior penalizaba esto con -10; los
+                                  # datos muestran lo contrario (probable
+                                  # pre-calificación de leads regulados que
+                                  # llegan hasta esta etapa).
+SISTEMA_COMPLETO_PENALTY = -10   # Sin datos aún: n=0 con este flag en true
+                                  # en todo el dataset. Se mantiene como
+                                  # supuesto de negocio, NO como hallazgo
+                                  # medido — revisar en cuanto haya casos.
+CANAL_SOPORTADO_LIFT = 1         # Con: n=1520, tasa 70.1%
+CANAL_NO_SOPORTADO_PENALTY = -3  # Sin: n=419,  tasa 66.8%
 
 
 def _volumen_bucket(volumen: int) -> str:

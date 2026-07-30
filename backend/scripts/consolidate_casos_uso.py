@@ -1,6 +1,6 @@
 """
-Normaliza casos_uso_principales (corrige encoding, elimina duplicados, filtra inválidos)
-y genera casos_uso_categorias (macro-categorías) para la tabla clients.
+Normaliza casos_uso_principales a categorías macro de Vambe (Literal)
+y deja casos_uso_nuevos como categorías generales no soportadas (str libre).
 
 Uso:
     python -m scripts.consolidate_casos_uso --table clients --batch-size 500
@@ -8,14 +8,13 @@ Uso:
 """
 
 import argparse
-import unicodedata
 from typing import Dict, List, Optional, Set, Tuple
 
 from data import db
 from config import load_settings
 
-# ── Categorías macro válidas ──
-CATEGORIAS: Set[str] = {
+# ── Categorías macro Vambe (casos_uso_principales) ──
+CATEGORIAS_VAMBE: Set[str] = {
     "Información y Consultas",
     "Agendamiento y Reservas",
     "Cotización y Presupuestos",
@@ -30,10 +29,14 @@ CATEGORIAS: Set[str] = {
     "Diagnóstico y Evaluación",
     "Notificaciones y Alertas",
     "Presentación de Contenidos",
+    "Postventa",
+    "Fidelización",
+    "Recompra",
+    "Upsell",
     "Otro",
 }
 
-# ── Mapeo explícito: caso de uso normalizado → categoría macro ──
+# ── Mapeo explícito: caso de uso normalizado → categoría Vambe ──
 MAPEO_CASOS: Dict[str, str] = {
     # Información y Consultas
     "proporcionar especificaciones técnicas": "Información y Consultas",
@@ -100,7 +103,6 @@ MAPEO_CASOS: Dict[str, str] = {
     "informar sobre oportunidades de voluntariado": "Información y Consultas",
     "información sobre bolsa de empleos": "Información y Consultas",
     "explicar indicaciones generales": "Información y Consultas",
-    "consulta de materiales y durabilidad": "Información y Consultas",
 
     # Agendamiento y Reservas
     "agendamiento de capacitaciones para docentes": "Agendamiento y Reservas",
@@ -154,7 +156,6 @@ MAPEO_CASOS: Dict[str, str] = {
     "crear compromiso con el cliente": "Procesamiento de Ventas y Órdenes",
     "ofrecer alternativas de stock": "Procesamiento de Ventas y Órdenes",
     "automatización de consultas sobre catálogos y condiciones de pedido": "Procesamiento de Ventas y Órdenes",
-    "gestión de programa de lealtad": "Procesamiento de Ventas y Órdenes",
 
     # Soporte Técnico y Reclamos
     "manejo de consultas sobre reclamos con derivación": "Soporte Técnico y Reclamos",
@@ -266,6 +267,48 @@ MAPEO_CASOS: Dict[str, str] = {
     "mostrar avances de estudiantes": "Presentación de Contenidos",
     "presentación de propiedades": "Presentación de Contenidos",
     "capacidad de mostrar imágenes de personalización": "Presentación de Contenidos",
+
+    # Postventa
+    "seguimiento post-compra": "Postventa",
+    "seguimiento post-venta": "Postventa",
+    "encuesta de satisfacción": "Postventa",
+    "garantía post-venta": "Postventa",
+    "feedback post-servicio": "Postventa",
+    "seguimiento de satisfacción": "Postventa",
+    "encuesta nps": "Postventa",
+    "revisión post-implementación": "Postventa",
+
+    # Fidelización
+    "gestión de programa de lealtad": "Fidelización",
+    "programa de lealtad": "Fidelización",
+    "manejo de relaciones vip": "Fidelización",
+    "retención de clientes": "Fidelización",
+    "beneficios para clientes frecuentes": "Fidelización",
+    "puntos de recompensa": "Fidelización",
+    "programa de fidelidad": "Fidelización",
+    "club de beneficios": "Fidelización",
+    "tarjeta de fidelización": "Fidelización",
+
+    # Recompra
+    "compra recurrente": "Recompra",
+    "reordenar productos": "Recompra",
+    "suscripción automática": "Recompra",
+    "renovación de servicios": "Recompra",
+    "pedido recurrente": "Recompra",
+    "compra periódica": "Recompra",
+    "reordenación automática": "Recompra",
+    "recordatorio de recompra": "Recompra",
+
+    # Upsell
+    "ofrecer upgrade": "Upsell",
+    "venta cruzada": "Upsell",
+    "cross-sell": "Upsell",
+    "ampliación de servicio": "Upsell",
+    "aumento de ticket": "Upsell",
+    "paquete superior": "Upsell",
+    "upgrade de plan": "Upsell",
+    "cross sell": "Upsell",
+    "ampliar cobertura": "Upsell",
 }
 
 # ── Entradas que NO son casos de uso (integraciones, capabilities, garbage) ──
@@ -316,7 +359,7 @@ def normalize(val: str) -> str:
 
 def categorizar(valor: str) -> Tuple[Optional[str], Optional[str]]:
     """
-    Devuelve (caso_uso_limpio, categoria_macro).
+    Devuelve (caso_uso_limpio, categoria_vambe).
     Si es inválido, devuelve (None, None).
     """
     if not valor or not isinstance(valor, str):
@@ -328,108 +371,182 @@ def categorizar(valor: str) -> Tuple[Optional[str], Optional[str]]:
     if key in ENTRADAS_INVALIDAS:
         return None, None
 
+    # Si ya es una categoría Vambe literal, devolver tal cual
+    if valor.strip() in CATEGORIAS_VAMBE:
+        return valor.strip(), valor.strip()
+
     # Mapeo explícito
     if key in MAPEO_CASOS:
         return valor.strip(), MAPEO_CASOS[key]
 
-    # Heurísticas
-    if "agendar" in key or "reserva" in key or "cita" in key or "visita" in key or "booking" in key:
+    # Heurísticas por bloque de negocio
+    if any(w in key for w in ["agendar", "reserva", "cita", "visita", "booking", "calendario"]):
         return valor.strip(), "Agendamiento y Reservas"
-    if "cotiz" in key or "presupuesto" in key or "simulación" in key or "financiamiento" in key:
+    if any(w in key for w in ["cotiz", "presupuesto", "simulación", "financiamiento", "crédito"]):
         return valor.strip(), "Cotización y Presupuestos"
-    if any(w in key for w in ["orden", "pedido", "compra", "venta", "contratación", "depósito", "pago"]):
+    if any(w in key for w in ["orden", "pedido", "compra", "venta", "contratación", "depósito", "pago", "checkout"]):
         return valor.strip(), "Procesamiento de Ventas y Órdenes"
-    if any(w in key for w in ["reclamo", "queja", "soporte", "garantía", "falla", "error", "post-tratamiento", "mantenimiento"]):
+    if any(w in key for w in ["reclamo", "queja", "soporte", "garantía", "falla", "error", "post-tratamiento", "mantenimiento", "técnico"]):
         return valor.strip(), "Soporte Técnico y Reclamos"
-    if any(w in key for w in ["track", "rastreo", "envío", "entrega", "despacho", "logística", "carga", "flete"]):
+    if any(w in key for w in ["track", "rastreo", "envío", "entrega", "despacho", "logística", "carga", "flete", "transporte"]):
         return valor.strip(), "Seguimiento y Logística"
-    if any(w in key for w in ["capacit", "educación", "onboarding", "guía", "tutorial", "tip", "explicar plataforma", "metodología", "entrenamiento"]):
+    if any(w in key for w in ["capacit", "educación", "onboarding", "guía", "tutorial", "tip", "explicar plataforma", "metodología", "entrenamiento", "formación"]):
         return valor.strip(), "Capacitación y Onboarding"
-    if any(w in key for w in ["lead", "calificación", "captura", "prospecto", "evaluación de perfil", "calificar"]):
+    if any(w in key for w in ["lead", "calificación", "captura", "prospecto", "evaluación de perfil", "calificar", "prospección"]):
         return valor.strip(), "Calificación y Captura de Leads"
     if any(w in key for w in ["asesor", "recomend", "sugerir", "personaliz", "talla", "diseño", "material", "paquete"]):
         return valor.strip(), "Asesoría y Recomendación"
-    if any(w in key for w in ["documento", "verificación", "validación", "identidad", "historia clínica", "postulación", "acceso"]):
+    if any(w in key for w in ["documento", "verificación", "validación", "identidad", "historia clínica", "postulación", "acceso", "kyc"]):
         return valor.strip(), "Documentación y Verificación"
-    if any(w in key for w in ["derivar", "escalar", "redireccionar", "humanos", "especialista", "tutor", "veterinario", "ingeniero", "ejecutivo", "farmaceútico"]):
+    if any(w in key for w in ["derivar", "escalar", "redireccionar", "humanos", "especialista", "tutor", "veterinario", "ingeniero", "ejecutivo", "farmaceútico", "supervisor"]):
         return valor.strip(), "Escalamiento y Derivación"
-    if any(w in key for w in ["diagnóstico", "evaluación inicial", "prueba", "simulación", "madurez", "conocimiento previo"]):
+    if any(w in key for w in ["diagnóstico", "evaluación inicial", "prueba", "simulación", "madurez", "conocimiento previo", "assessment"]):
         return valor.strip(), "Diagnóstico y Evaluación"
-    if any(w in key for w in ["notificación", "alerta", "actualización", "comunicación de eventos", "llegada", "salida", "retraso"]):
+    if any(w in key for w in ["notificación", "alerta", "actualización", "comunicación de eventos", "llegada", "salida", "retraso", "recordatorio"]):
         return valor.strip(), "Notificaciones y Alertas"
-    if any(w in key for w in ["portafolio", "testimonio", "caso de éxito", "demostración", "avance", "proyecto anterior", "muestra", "presentación"]):
+    if any(w in key for w in ["portafolio", "testimonio", "caso de éxito", "demostración", "avance", "proyecto anterior", "muestra", "presentación", "showcase"]):
         return valor.strip(), "Presentación de Contenidos"
-    if any(w in key for w in ["información", "consulta", "duda", "pregunta", "respuesta", "explicación", "ficha técnica", "especificación", "cobertura", "término", "procedimiento", "característica", "propiedad", "disponibilidad", "horario", "precio", "costo"]):
+    if any(w in key for w in ["postventa", "post-compra", "post-venta", "post-tratamiento", "post-servicio", "garantía extendida", "satisfacción post", "feedback post", "encuesta post"]):
+        return valor.strip(), "Postventa"
+    if any(w in key for w in ["fidelización", "lealtad", "puntos", "recompensa", "membresía", "retención", "vip", "frecuente", "programa de fidelidad", "club de beneficios", "tarjeta de fidelización"]):
+        return valor.strip(), "Fidelización"
+    if any(w in key for w in ["recompra", "recurrente", "reordenar", "suscripción", "renovación automática", "pedido recurrente", "compra periódica", "reordenación automática", "recordatorio de recompra"]):
+        return valor.strip(), "Recompra"
+    if any(w in key for w in ["upsell", "cross-sell", "cross sell", "venta cruzada", "upgrade", "ampliar", "paquete superior", "aumentar ticket", "upgrade de plan", "ampliar cobertura", "cross sell"]):
+        return valor.strip(), "Upsell"
+    if any(w in key for w in ["información", "consulta", "duda", "pregunta", "respuesta", "explicación", "ficha técnica", "especificación", "cobertura", "término", "procedimiento", "característica", "propiedad", "disponibilidad", "horario", "precio", "costo", "tarifa", "especificación"]):
         return valor.strip(), "Información y Consultas"
 
     # Por defecto conservar el texto original pero categorizar como Otro
     return valor.strip(), "Otro"
 
 
-def procesar_array(arr: Optional[List[str]]) -> Tuple[List[str], List[str], bool]:
+def procesar_principales(arr: Optional[List[str]]) -> Tuple[List[str], bool]:
     """
-    Devuelve (casos_uso_limpios, categorias, cambió).
-    Filtra inválidos, corrige encoding, deduplica.
+    Normaliza casos_uso_principales a categorías Vambe.
+    Devuelve (categorias_vambe_deduped, cambió).
+    """
+    if not isinstance(arr, list):
+        return [], False
+
+    cats: List[str] = []
+    cambio = False
+    vistos: Set[str] = set()
+
+    for item in arr:
+        if not isinstance(item, str):
+            cambio = True
+            continue
+
+        caso_limpio, categoria = categorizar(item)
+        if caso_limpio is None or categoria is None:
+            cambio = True
+            continue
+
+        # Detectar si el texto original era diferente a la categoría final
+        if normalize(item) != normalize(categoria):
+            cambio = True
+
+        if categoria not in vistos:
+            vistos.add(categoria)
+            cats.append(categoria)
+        else:
+            cambio = True  # duplicado eliminado
+
+    return cats, cambio
+
+
+def procesar_nuevos(arr: Optional[List[str]]) -> Tuple[List[str], List[str], bool]:
+    """
+    Limpia casos_uso_nuevos (str libre) y detecta overlaps con Vambe.
+    Devuelve (nuevos_limpios, para_mover_a_principales, cambió).
     """
     if not isinstance(arr, list):
         return [], [], False
 
-    casos_limpios = []
-    categorias = []
+    nuevos: List[str] = []
+    mover: List[str] = []
     cambio = False
-    vistos_casos = set()
-    vistos_cat = set()
+    vistos: Set[str] = set()
+    vistos_lower: Set[str] = set()
 
     for item in arr:
         if not isinstance(item, str):
-            continue
-        caso_limpio, categoria = categorizar(item)
-        if caso_limpio is None:
             cambio = True
             continue
-        if caso_limpio.lower() != item.lower() or fix_encoding(item) != item:
+
+        limpio = fix_encoding(item).strip()
+        if not limpio:
             cambio = True
-        if caso_limpio not in vistos_casos:
-            vistos_casos.add(caso_limpio)
-            casos_limpios.append(caso_limpio)
+            continue
+
+        # Si ya es una categoría Vambe literal, mover a principales
+        if limpio in CATEGORIAS_VAMBE:
+            if limpio not in vistos:
+                vistos.add(limpio)
+                mover.append(limpio)
+            cambio = True
+            continue
+
+        # Si categoriza a Vambe (y no es Otro), mover a principales
+        _, categoria = categorizar(item)
+        if categoria and categoria != "Otro" and categoria in CATEGORIAS_VAMBE:
+            if categoria not in vistos:
+                vistos.add(categoria)
+                mover.append(categoria)
+            cambio = True
+            continue
+
+        # Si es inválido (capability/integration), eliminar
+        if normalize(item) in ENTRADAS_INVALIDAS:
+            cambio = True
+            continue
+
+        # Conservar como nuevo (deduplicado case-insensitive)
+        key_lower = limpio.lower()
+        if key_lower not in vistos_lower:
+            vistos_lower.add(key_lower)
+            nuevos.append(limpio)
         else:
             cambio = True
-        if categoria and categoria not in vistos_cat:
-            vistos_cat.add(categoria)
-            categorias.append(categoria)
 
-    return casos_limpios, categorias, cambio
+    return nuevos, mover, cambio
 
 
-def clean_jsonb(obj: dict, path_casos: str, path_cats: str) -> bool:
+def clean_jsonb_principales(obj: dict, path_casos: str, path_cats: str) -> bool:
+    """Limpia casos_uso_principales dentro de un JSONB anidado."""
     keys = path_casos.split(".")
+    target = obj
     for key in keys[:-1]:
-        if not isinstance(obj, dict) or key not in obj:
+        if not isinstance(target, dict) or key not in target:
             return False
-        obj = obj[key]
+        target = target[key]
     last = keys[-1]
-    if last not in obj or not isinstance(obj[last], list):
+    if last not in target or not isinstance(target[last], list):
         return False
 
-    nuevo_casos, nuevo_cats, cambio = procesar_array(obj[last])
+    nuevo_casos, cambio = procesar_principales(target[last])
     if not cambio:
-        return False
+        # Verificar si el contenido realmente cambió (puede que no haya duplicados pero sí reorden)
+        if list(nuevo_casos) == list(target[last]):
+            return False
 
-    obj[last] = nuevo_casos
-    # Set categorías en el JSONB si existe el path
+    target[last] = nuevo_casos
+
+    # Sincronizar casos_uso_categorias (ahora redundante, pero mantenemos consistencia)
     cat_keys = path_cats.split(".")
     cat_target = obj
     for key in cat_keys[:-1]:
         if key not in cat_target:
             cat_target[key] = {}
         cat_target = cat_target[key]
-    cat_target[cat_keys[-1]] = nuevo_cats
+    cat_target[cat_keys[-1]] = nuevo_casos
     return True
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Normaliza casos_uso_principales y genera casos_uso_categorias"
+        description="Normaliza casos_uso_principales a categorías Vambe y limpia casos_uso_nuevos"
     )
     parser.add_argument("--table", required=True, help="Nombre de la tabla")
     parser.add_argument(
@@ -451,9 +568,10 @@ def main() -> None:
     print()
 
     actualizados, limpios, fallidos = 0, 0, 0
-    distribucion_casos: Dict[str, int] = {}
     distribucion_cats: Dict[str, int] = {}
+    nuevos_stats: Dict[str, int] = {}
     eliminados_invalidos = 0
+    movidos_a_principales = 0
     offset = 0
     page = 1
 
@@ -476,42 +594,62 @@ def main() -> None:
             if not reg_id:
                 continue
 
-            update_data = {}
+            update_data: Dict[str, any] = {}
             changed = False
+            principales_actuales: Set[str] = set()
 
             # ── 1. Columna plana: casos_uso_principales ──
             original_arr = reg.get("casos_uso_principales")
             if isinstance(original_arr, list):
-                nuevo_casos, nuevo_cats, arr_cambio = procesar_array(original_arr)
-                if arr_cambio:
-                    update_data["casos_uso_principales"] = nuevo_casos
-                    update_data["casos_uso_categorias"] = nuevo_cats
+                nuevo_cats, arr_cambio = procesar_principales(original_arr)
+                # Contar eliminados
+                eliminados_invalidos += len([x for x in original_arr if isinstance(x, str) and normalize(x) in ENTRADAS_INVALIDAS])
+                if arr_cambio or set(nuevo_cats) != set(original_arr):
+                    update_data["casos_uso_principales"] = nuevo_cats
                     changed = True
-                    eliminados_invalidos += len(original_arr) - len(nuevo_casos)
-                    for c in nuevo_casos:
-                        distribucion_casos[c] = distribucion_casos.get(c, 0) + 1
                     for c in nuevo_cats:
                         distribucion_cats[c] = distribucion_cats.get(c, 0) + 1
+                    principales_actuales.update(nuevo_cats)
                 else:
-                    for item in original_arr:
-                        caso, cat = categorizar(item)
-                        if caso:
-                            distribucion_casos[caso] = distribucion_casos.get(caso, 0) + 1
-                        if cat:
-                            distribucion_cats[cat] = distribucion_cats.get(cat, 0) + 1
+                    principales_actuales.update(original_arr)
+                    for c in original_arr:
+                        if isinstance(c, str):
+                            _, cat = categorizar(c)
+                            if cat:
+                                distribucion_cats[cat] = distribucion_cats.get(cat, 0) + 1
+            else:
+                # Si no es lista, limpiar a lista vacía
+                if original_arr is not None:
+                    update_data["casos_uso_principales"] = []
+                    changed = True
 
-            # ── 2. Columna plana: casos_uso_nuevos (también limpiar) ──
+            # ── 2. Columna plana: casos_uso_nuevos ──
             original_nuevos = reg.get("casos_uso_nuevos")
             if isinstance(original_nuevos, list):
-                nuevo_nuevos, _, nuevos_cambio = procesar_array(original_nuevos)
-                if nuevos_cambio:
+                nuevo_nuevos, mover_nuevos, nuevos_cambio = procesar_nuevos(original_nuevos)
+
+                # Mover los que calzan con Vambe a principales
+                if mover_nuevos:
+                    principales_finales = list(principales_actuales | set(mover_nuevos))
+                    update_data["casos_uso_principales"] = principales_finales
+                    changed = True
+                    movidos_a_principales += len(mover_nuevos)
+
+                if nuevos_cambio or len(nuevo_nuevos) != len(original_nuevos):
                     update_data["casos_uso_nuevos"] = nuevo_nuevos
+                    changed = True
+
+                for item in nuevo_nuevos:
+                    nuevos_stats[item] = nuevos_stats.get(item, 0) + 1
+            else:
+                if original_nuevos is not None:
+                    update_data["casos_uso_nuevos"] = []
                     changed = True
 
             # ── 3. JSONB raw_extraction ──
             raw = reg.get("raw_extraction")
             if isinstance(raw, dict):
-                raw_changed = clean_jsonb(
+                raw_changed = clean_jsonb_principales(
                     raw,
                     "necesidades_y_casos_uso.casos_uso_principales",
                     "necesidades_y_casos_uso.casos_uso_categorias",
@@ -552,19 +690,21 @@ def main() -> None:
 
     print()
     print("═" * 50)
-    print(f"  ACTUALIZADOS : {actualizados}")
-    print(f"  SIN CAMBIOS  : {limpios}")
-    print(f"  FALLIDOS     : {fallidos}")
-    print(f"  ELIMINADOS   : {eliminados_invalidos} (entradas inválidas)")
+    print(f"  ACTUALIZADOS          : {actualizados}")
+    print(f"  SIN CAMBIOS           : {limpios}")
+    print(f"  FALLIDOS              : {fallidos}")
+    print(f"  MOVIDOS A PRINCIPALES : {movidos_a_principales}")
+    print(f"  INVÁLIDOS ELIMINADOS  : {eliminados_invalidos}")
     print("═" * 50)
     print()
-    print("  Top 20 casos de uso específicos:")
-    for caso, cnt in sorted(distribucion_casos.items(), key=lambda x: -x[1])[:20]:
-        print(f"    {caso:45s}: {cnt:5d}")
-    print()
-    print("  Distribución de categorías macro:")
+    print("  Distribución de categorías Vambe (casos_uso_principales):")
     for cat, cnt in sorted(distribucion_cats.items(), key=lambda x: -x[1]):
-        print(f"    {cat:35s}: {cnt:5d}")
+        print(f"    {cat:40s}: {cnt:5d}")
+    if nuevos_stats:
+        print()
+        print("  Top 20 casos de uso no soportados (casos_uso_nuevos):")
+        for caso, cnt in sorted(nuevos_stats.items(), key=lambda x: -x[1])[:20]:
+            print(f"    {caso:45s}: {cnt:5d}")
 
 
 if __name__ == "__main__":

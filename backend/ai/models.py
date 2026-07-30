@@ -152,9 +152,42 @@ class NecesidadesYCasosUso(BaseModel):
         default_factory=list,
         description="Canales que el cliente pidió explícitamente pero que Vambe no soporta hoy (ej. 'Telegram', 'SMS', 'Email'). Lista vacía si no aplica o si todos los canales pedidos ya están soportados. Usa valores de la lista de <categorias_existentes> si aplica. Solo crea una nueva etiqueta si el canal no calza con ninguna existente.",
     )
-    casos_uso_principales: list[str] = Field(
+    casos_uso_principales: list[Literal[
+        "Información y Consultas",
+        "Agendamiento y Reservas",
+        "Cotización y Presupuestos",
+        "Procesamiento de Ventas y Órdenes",
+        "Soporte Técnico y Reclamos",
+        "Seguimiento y Logística",
+        "Capacitación y Onboarding",
+        "Calificación y Captura de Leads",
+        "Asesoría y Recomendación",
+        "Documentación y Verificación",
+        "Escalamiento y Derivación",
+        "Diagnóstico y Evaluación",
+        "Notificaciones y Alertas",
+        "Presentación de Contenidos",
+        "Postventa",
+        "Fidelización",
+        "Recompra",
+        "Upsell",
+        "Otro",
+    ]] = Field(
         default_factory=list,
-        description="Casos de uso principales que busca resolver el cliente.",
+        description=(
+            "Categorías macro de casos de uso que el cliente busca resolver con Vambe. "
+            "Clasifica SIEMPRE en una de estas categorías literales. NUNCA inventes valores fuera de esta lista. "
+            "Si el caso de uso no calza exactamente con ninguna categoría, usa 'Otro'."
+        ),
+    )
+    casos_uso_nuevos: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Categorías generales de casos de uso que el cliente mencionó explícitamente pero que Vambe NO soporta hoy. "
+            "Usa lenguaje natural pero a nivel de categoría general (ej: 'Gestión de Nómina', 'Contabilidad Avanzada', 'Análisis Predictivo de Inventario'). "
+            "NUNCA uses valores que calcen con las categorías de casos_uso_principales. "
+            "Lista vacía si no aplica o si todos los casos de uso mencionados ya están cubiertos por Vambe."
+        ),
     )
     integraciones_requeridas: list[
         Literal[
@@ -182,6 +215,15 @@ class NecesidadesYCasosUso(BaseModel):
             "Lista de categorías GENERALES de sistemas que requiere integrar el cliente. "
             "NUNCA uses nombres de marcas o software específicos. Mapea todo a su categoría macro "
             "usando las reglas de consolidación del prompt. Elimina duplicados."
+        ),
+    )
+    integraciones_nuevas: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Lista de integraciones que el cliente pidió explícitamente pero que Vambe no soporta hoy. "
+            "Conserva el lenguaje natural de la transcripción. "
+            "Lista vacía si no aplica o si todas las integraciones pedidas ya están soportadas en alguna de las categorías generales de integraciones_requeridas"
+            "SOLO crea una nueva etiqueta si la integración no calza con ninguna existente. "
         ),
     )
 
