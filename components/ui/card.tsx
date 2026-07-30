@@ -18,5 +18,5 @@ export function CardTitle({ className = "", ...props }: HTMLAttributes<HTMLHeadi
 }
 
 export function CardContent({ className = "", ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={`p-5 pt-0 ${className}`} {...props} />;
+  return <div className={`p-5 ${className}`} {...props} />;
 }

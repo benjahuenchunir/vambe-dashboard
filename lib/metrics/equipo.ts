@@ -20,19 +20,6 @@ export function computeVendedorPerformance(clients: ClientAnalysis[]) {
     .sort((a, b) => b.tasaCierre - a.tasaCierre);
 }
 
-export function computeAlertasObjeciones(clients: ClientAnalysis[]) {
-  return clients
-    .filter((c) => !c.cierre && c.objecionesPrincipales.length > 0)
-    .map((c) => ({
-      clienteId: c.id,
-      nombreCliente: c.nombreCliente,
-      vendedor: c.vendedor,
-      objecion: c.objecionesPrincipales[0],
-      urgencia: c.urgencia,
-    }))
-    .slice(0, 8);
-}
-
 export function computeOportunidadesRecuperacion(
   clients: ClientAnalysis[],
 ): OportunidadRecuperacion[] {
@@ -58,6 +45,8 @@ export function computeOportunidadesRecuperacion(
       return {
         clienteId: c.id,
         nombreCliente: c.nombreCliente,
+        telefono: c.telefono,
+        correo: c.correo,
         vendedor: c.vendedor,
         readinessScore: c.vambeReadinessScore ?? 0,
         motivo,

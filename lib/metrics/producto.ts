@@ -22,23 +22,24 @@ export function computeTopIntegraciones(clients: ClientAnalysis[]) {
 }
 
 export function computeTopCasosUso(clients: ClientAnalysis[]) {
-  const casoUsoStats = new Map<string, { total: number; cerrados: number }>();
+  const casoUsoStats = new Map<string, { total: number; cerrados: number; frecuencia: number }>();
   for (const c of clients) {
     for (const caso of c.casosUsoPrincipales) {
-      const entry = casoUsoStats.get(caso) ?? { total: 0, cerrados: 0 };
+      const entry = casoUsoStats.get(caso) ?? { total: 0, cerrados: 0, frecuencia: 0 };
       entry.total += 1;
       if (c.cierre) entry.cerrados += 1;
+      entry.frecuencia += 1;
       casoUsoStats.set(caso, entry);
     }
   }
   return [...casoUsoStats.entries()]
-    .map(([nombre, v]) => ({ nombre, tasaCierre: pct(v.cerrados, v.total) }))
+    .map(([nombre, v]) => ({ nombre, tasaCierre: pct(v.cerrados, v.total), frecuencia: v.frecuencia }))
     .sort((a, b) => b.tasaCierre - a.tasaCierre)
     .slice(0, 5);
 }
 
 /** Combina demanda de canales soportados (canales_deseados, sin el catch-all "Otro")
- *  con pedidos de canales fuera de catálogo (canal_no_soportado_solicitado). */
+ *  con pedidos de canales fuera de catálogo (canales_no_soportados_solicitados). */
 export function computeCanalesDemanda(clients: ClientAnalysis[]): CanalDemanda[] {
   const counts = new Map<string, { count: number; soportado: boolean }>();
 
@@ -49,7 +50,7 @@ export function computeCanalesDemanda(clients: ClientAnalysis[]): CanalDemanda[]
       entry.count += 1;
       counts.set(canal, entry);
     }
-    for (const canal of c.canalNoSoportadoSolicitado) {
+    for (const canal of c.canalesNoSoportados) {
       const entry = counts.get(canal) ?? { count: 0, soportado: false };
       entry.count += 1;
       counts.set(canal, entry);
@@ -58,7 +59,8 @@ export function computeCanalesDemanda(clients: ClientAnalysis[]): CanalDemanda[]
 
   return [...counts.entries()]
     .map(([canal, v]) => ({ canal, total: v.count, porcentaje: pct(v.count, clients.length), soportado: v.soportado }))
-    .sort((a, b) => b.total - a.total);
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
 }
 
 export function computeObjecionesFrecuentes(clients: ClientAnalysis[]) {

@@ -9,10 +9,10 @@ export function VolumeVsCloseRate({ data }: { data: VolumenBucket[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Volumen mensual (por cuartil) vs. resultado</CardTitle>
+        <CardTitle>Tasa de cierre por tramo de volumen</CardTitle>
         <InfoTooltip
-          description="Negocios cerrados vs. perdidos agrupados por rango de volumen mensual reportado, con la tasa de cierre de cada rango marcada arriba de la barra."
-          note="Si las tasas de cierre salen parecidas entre rangos, es una señal real: el volumen por sí solo no está discriminando tanto el cierre como se asume en el Readiness Score — vale la pena revisar el peso que le da la fórmula."
+          description="Distribución de negocios ganados y perdidos según el rango de consultas mensuales reportadas, con la tasa de conversión (%) por tramo."
+          note="Si la tasa de cierre es similar entre tramos, el volumen no está siendo un factor determinante para el cierre. Sirve como indicador para ajustar el peso del volumen dentro del Readiness Score."
         />
       </CardHeader>
       <CardContent className="h-72">

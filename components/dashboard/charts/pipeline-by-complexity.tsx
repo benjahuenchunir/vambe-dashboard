@@ -9,27 +9,24 @@ const COLORS: Record<string, string> = {
   Baja: "#a3c9ff",
   Media: "#4a9dff",
   Alta: "#006bff",
-  no_inferible: "#c7ccd1",
+  null: "#c7ccd1",
 };
 
 const LABELS: Record<string, string> = {
   Baja: "Baja",
   Media: "Media",
   Alta: "Alta",
-  no_inferible: "Sin datos suficientes",
+  null: "Sin datos",
 };
 
 export function PipelineByComplexity({ data }: { data: PipelinePorComplejidad[] }) {
-  const sinDatos = data.find((d) => d.complejidad === "no_inferible");
-  const sinDatosPct = sinDatos?.porcentaje ?? 0;
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Pipeline por complejidad técnica</CardTitle>
         <InfoTooltip
           description="Distribución de negocios por complejidad técnica de implementación (Baja/Media/Alta), según lo que el LLM pudo inferir de la transcripción."
-          note="Ayuda a estimar carga de trabajo de implementación antes de firmar contratos. Ojo: hoy una parte importante queda como 'sin datos suficientes' — es una limitación del prompt actual, no del cliente."
+          note="Ayuda a estimar carga de trabajo de implementación antes de firmar contratos. Hoy una parte importante queda como 'sin datos'. Es una limitación del prompt actual y de los datos disponibles en la transcripción."
         />
       </CardHeader>
       <CardContent className="h-72">
@@ -55,11 +52,6 @@ export function PipelineByComplexity({ data }: { data: PipelinePorComplejidad[] 
             />
           </PieChart>
         </ResponsiveContainer>
-        {sinDatosPct >= 30 && (
-          <p className="mt-1 text-center text-xs text-muted-foreground">
-            {sinDatosPct}% de los negocios no tiene complejidad técnica determinada — dato pendiente de mejorar en el prompt de categorización.
-          </p>
-        )}
         {data.length === 0 && <p className="text-sm text-muted-foreground">Sin datos para este filtro.</p>}
       </CardContent>
     </Card>

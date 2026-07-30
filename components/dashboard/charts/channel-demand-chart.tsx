@@ -3,12 +3,17 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CanalDemanda } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export function ChannelDemandChart({ data }: { data: CanalDemanda[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Demanda de canales</CardTitle>
+        <CardTitle>Demanda de canales de comunicación</CardTitle>
+        <InfoTooltip
+          description="Ranking de los canales más solicitados en las reuniones, diferenciando las soluciones soportadas nativamente de las solicitudes fuera del catálogo actual (ej. Telegram, SMS)."
+          note="Los canales no soportados representan la demanda insatisfecha directa. Priorizar los de mayor volumen en el roadmap permite reducir la fricción en ventas y capturar negocios que hoy se pierden por falta de cobertura."
+        />
       </CardHeader>
       <CardContent className="h-72">
         <ResponsiveContainer width="100%" height="100%">
