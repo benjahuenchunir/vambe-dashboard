@@ -7,10 +7,10 @@ export function OportunidadesRecuperacion({ data }: { data: OportunidadRecuperac
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Oportunidades de recuperación</CardTitle>
+        <CardTitle>Oportunidades prioritarias a destrabar</CardTitle>
         <InfoTooltip
-          description="Negocios abiertos con readiness score alto (>60), ordenados de mayor a menor, con la objeción principal que los está frenando."
-          note="Es la lista de a quién contactar hoy — junta 'vale la pena perseguirlo' con 'esto es lo que hay que resolverle', para que ventas no cruce dos reportes distintos."
+          description="Tratos abiertos con alto Readiness Score (>60), ordenados por potencial de cierre e identificando el bloqueador u objeción principal registrada en la reunión."
+          note="Lista de acción directa para ventas: consolida la calificación de la cuenta con el obstáculo específico a resolver, evitando la necesidad de cruzar múltiples reportes antes de llamar al cliente."
         />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">

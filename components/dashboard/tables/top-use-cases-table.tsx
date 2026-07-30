@@ -27,10 +27,10 @@ export function TopUseCasesTable({ data }: { data: TopCasoUso[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top casos de uso</CardTitle>
+        <CardTitle>Top casos de uso y conversión</CardTitle>
         <InfoTooltip
-          description="Casos de uso más mencionados por los clientes, con su tasa de cierre asociada (entre los mencionados al menos 3 veces, para que el % no lo defina un solo caso aislado)."
-          note="Dice qué funcionalidad destacar en el discurso de ventas y demos — prioriza según lo que realmente convierte, no solo lo más pedido."
+          description="Frecuencia de los casos de uso más mencionados en discovery y su respectiva tasa de cierre."
+          note="Orienta las demos y la propuesta de valor comercial. Permite priorizar el discurso de ventas en torno a las soluciones que efectivamente cierran negocios, no solo las que generan curiosidad."
         />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">

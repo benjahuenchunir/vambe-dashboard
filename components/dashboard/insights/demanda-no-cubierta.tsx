@@ -50,8 +50,8 @@ export function DemandaNoCubiertaCard({
       <CardHeader>
         <CardTitle>Demanda no cubierta</CardTitle>
         <InfoTooltip
-          description="Casos de uso e integraciones que los clientes piden y que no están entre las capacidades core actuales de Vambe, según lo que detecta el LLM."
-          note="Es la señal más directa de hacia dónde debería crecer el roadmap de producto — lo que el mercado pide y Vambe todavía no ofrece."
+          description="Casos de uso e integraciones solicitadas por prospectos que caen fuera de las capacidades actuales de Vambe, identificadas a partir de la transcripción de las reuniones."
+          note="Representa la brecha de producto (feature gaps) del pipeline. Es un indicador clave para guiar la evolución del producto con demanda real y validada directamente por el mercado."
         />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">

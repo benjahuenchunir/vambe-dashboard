@@ -9,7 +9,7 @@ export interface ClientRow {
   csv_row_id: number;
   nombre_cliente: string;
   telefono: string;
-  correo: string;
+  email: string;
   vendedor: string;
   fecha_reunion: string;
   cierre: boolean;
@@ -54,7 +54,7 @@ export function rowToClient(row: ClientRow): ClientAnalysis {
     id: row.id,
     nombreCliente: row.nombre_cliente,
     telefono: row.telefono,
-    correo: row.correo,
+    correo: row.email,
     vendedor: row.vendedor,
     fechaReunion: row.fecha_reunion,
     cierre: row.cierre,

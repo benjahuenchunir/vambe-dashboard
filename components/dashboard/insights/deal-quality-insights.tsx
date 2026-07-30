@@ -52,10 +52,10 @@ export function DealQualityInsights({ data }: { data: CalidadReunion }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Calidad de la reunión</CardTitle>
+        <CardTitle>Señales de cualificación vs. Cierre</CardTitle>
         <InfoTooltip
-          description="Cruza tasa de cierre con tamaño de negocio, perfil del decisor, tipo de comprador, dolor explícito y los dos factores de riesgo de implementación (regulación compleja, sistema de gestión completo)."
-          note="Ayuda a calificar reuniones antes de invertir tiempo de seguimiento: qué características predicen mejor un cierre, más allá del readiness score general."
+          description="Cruza la tasa de conversión real con atributos clave detectados en discovery: perfil del decisor, dolor explícito, tamaño del negocio y factores de riesgo de implementación."
+          note="Permite priorizar el tiempo de seguimiento comercial. Identifica qué características específicas predicen mejor un cierre exitoso, complementando la visión macro del Readiness Score."
         />
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
@@ -64,15 +64,13 @@ export function DealQualityInsights({ data }: { data: CalidadReunion }) {
           rows={data.porTamanoNegocio.map((r) => ({ label: r.tamano, tasaCierre: r.tasaCierre, total: r.total }))}
         />
         <Seccion
+          title="Cierre por tipo de comprador"
+          rows={data.porTipoComprador.map((r) => ({ label: r.tipo, tasaCierre: r.tasaCierre, total: r.total }))}
+        />
+        <Seccion
           title="Cierre por perfil del decisor"
           rows={data.porPerfilDecisor.map((r) => ({ label: r.perfil, tasaCierre: r.tasaCierre, total: r.total }))}
         />
-        {data.porTipoComprador && (
-          <Seccion
-            title="Cierre por tipo de comprador"
-            rows={data.porTipoComprador.map((r) => ({ label: r.tipo, tasaCierre: r.tasaCierre, total: r.total }))}
-          />
-        )}
         <Seccion
           title="Impacto del dolor explícito"
           rows={impactoRows("Con dolor explícito", "Sin dolor explícito", impactoDolorExplicito)}

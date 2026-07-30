@@ -10,8 +10,8 @@ export function TopObjections({ data }: { data: ObjecionFrecuente[] }) {
       <CardHeader>
         <CardTitle>Objeciones implícitas más frecuentes</CardTitle>
         <InfoTooltip
-          description="Ranking de las objeciones implícitas más frecuentes detectadas por el LLM, contando tanto negocios cerrados como abiertos."
-          note="Dice qué objeción atacar primero en el guion de ventas o en el producto — muestra el patrón general, no solo lo que apareció en un deal puntual."
+          description="Ranking de dudas o reservas latentes detectadas en las conversaciones, contabilizadas sobre el total de negocios (abiertos y cerrados)."
+          note="Muestra el patrón de fricción invisible del pipeline. Permite anticipar y resolver en la demo o en el guion de ventas las dudas más repetidas antes de que se conviertan en un rechazo explícito."
         />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">

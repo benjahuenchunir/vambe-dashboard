@@ -16,7 +16,7 @@ const LABELS: Record<string, string> = {
   Baja: "Baja",
   Media: "Media",
   Alta: "Alta",
-  null: "Sin datos suficientes",
+  null: "Sin datos",
 };
 
 export function PipelineByComplexity({ data }: { data: PipelinePorComplejidad[] }) {
@@ -26,7 +26,7 @@ export function PipelineByComplexity({ data }: { data: PipelinePorComplejidad[] 
         <CardTitle>Pipeline por complejidad técnica</CardTitle>
         <InfoTooltip
           description="Distribución de negocios por complejidad técnica de implementación (Baja/Media/Alta), según lo que el LLM pudo inferir de la transcripción."
-          note="Ayuda a estimar carga de trabajo de implementación antes de firmar contratos. Ojo: hoy una parte importante queda como 'sin datos suficientes' — es una limitación del prompt actual, no del cliente."
+          note="Ayuda a estimar carga de trabajo de implementación antes de firmar contratos. Hoy una parte importante queda como 'sin datos'. Es una limitación del prompt actual y de los datos disponibles en la transcripción."
         />
       </CardHeader>
       <CardContent className="h-72">

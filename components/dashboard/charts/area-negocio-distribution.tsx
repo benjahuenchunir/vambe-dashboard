@@ -31,10 +31,10 @@ export function AreaNegocioDistribution({ clients }: AreaNegocioDistributionProp
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Distribución por área de negocio</CardTitle>
+        <CardTitle>Pipeline por área de negocio</CardTitle>
         <InfoTooltip
-          description="Cantidad total de negocios y cuántos se cerraron, agrupados por el área de negocio principal (Ecommerce, Agendamiento, Venta Consultiva, Atención al Cliente) que detectó el LLM."
-          note="Muestra dónde se concentra el pipeline y qué área convierte mejor — ayuda a decidir en qué área de producto enfocar el roadmap y el discurso comercial."
+          description="Volumen total de negocios y casos cerrados agrupados por el área principal identificada en la llamada (Ecommerce, Agendamiento, Venta Consultiva, Atención al Cliente)."
+          note="Identifica dónde se concentra el interés del mercado y qué casos de uso convierten mejor. Se puede usar para priorizar integraciones en el roadmap y refinar el pitch según la vertical."
         />
       </CardHeader>
       <CardContent className="h-72">

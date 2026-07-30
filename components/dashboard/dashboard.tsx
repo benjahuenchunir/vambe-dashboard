@@ -8,6 +8,7 @@ import { applyFilters, searchClients } from "@/lib/filters";
 import { KpiCards } from "./kpi-cards";
 import { FiltersBar } from "./filters-bar";
 import { ProcessMorePanel } from "./process-more-panel";
+import { ClientsTable } from "./clients-table";
 import { CloseRateByVertical } from "./charts/close-rate-by-vertical";
 import { PipelineByComplexity } from "./charts/pipeline-by-complexity";
 import { VolumeVsCloseRate } from "./charts/volume-vs-close-rate";
@@ -33,6 +34,7 @@ export function Dashboard({ initialClients }: DashboardProps) {
   const [clients, setClients] = useState(initialClients);
   const [filters, setFilters] = useState<ClientFilters>({});
   const [query, setQuery] = useState("");
+  const [view, setView] = useState<"dashboard" | "table">("dashboard");
 
   const filteredClients = useMemo(
     () => searchClients(applyFilters(clients, filters), query),
@@ -74,8 +76,55 @@ export function Dashboard({ initialClients }: DashboardProps) {
         onQueryChange={setQuery}
       />
 
+      {/* Toggle de vistas */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center rounded-lg border border-border bg-card p-1">
+          <button
+            onClick={() => setView("dashboard")}
+            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
+              view === "dashboard"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
+            Dashboard
+          </button>
+          <button
+            onClick={() => setView("table")}
+            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
+              view === "table"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18" />
+              <path d="M3 12h18" />
+              <path d="M3 18h18" />
+              <path d="M8 6v12" />
+              <path d="M16 6v12" />
+            </svg>
+            Tabla de clientes
+          </button>
+        </div>
+
+        {view === "table" && (
+          <span className="text-sm text-muted-foreground">
+            {filteredClients.length} {filteredClients.length === 1 ? "registro" : "registros"} filtrados
+          </span>
+        )}
+      </div>
+
       {!hasResults ? (
         <EmptyStateOnNoResults onReset={handleResetFilters} />
+      ) : view === "table" ? (
+        <ClientsTable clients={filteredClients} />
       ) : (
         <>
           <KpiCards kpis={metrics.kpis} />
@@ -109,7 +158,6 @@ export function Dashboard({ initialClients }: DashboardProps) {
             <VendorPerformanceTable data={metrics.vendedorPerformance} />
           </section>
 
-          {/* Desempeño y atribución */}
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <DealQualityInsights data={metrics.calidadReunion} />
             <CloseRateByDicoverSource data={metrics.roiPorFuente} />

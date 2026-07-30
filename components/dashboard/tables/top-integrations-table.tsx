@@ -8,8 +8,8 @@ export function TopIntegrationsTable({ data }: { data: TopIntegracion[] }) {
       <CardHeader>
         <CardTitle>Top 5 integraciones solicitadas</CardTitle>
         <InfoTooltip
-          description="Las 5 integraciones que más piden los clientes, con el % de negocios que las mencionan y en qué industria aparecen con más frecuencia."
-          note="Prioriza el roadmap de conectores sin código — dice qué sistema conviene integrar primero para destrabar más ventas."
+          description="Las 5 integraciones más requeridas durante las reuniones, mostrando su porcentaje de presencia en el pipeline y la industria donde predomina cada una."
+          note="Directriz directa para el roadmap de producto. Permite identificar qué conectores desbloquean mayor volumen de ventas o eliminan la principal objeción técnica."
         />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">

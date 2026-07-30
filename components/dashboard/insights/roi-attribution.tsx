@@ -23,10 +23,10 @@ export function CloseRateByDicoverSource({ data }: { data: RoiFuente[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tasa de cierre por fuente de descubrimiento</CardTitle>
+        <CardTitle>Tasa de cierre por canal de origen</CardTitle>
         <InfoTooltip
-          description="Tasa de cierre y volumen de leads por fuente de descubrimiento (cómo llegó el cliente a Vambe), con ejemplos concretos de cada fuente."
-          note="Ayuda a decidir dónde poner esfuerzo de marketing/prospección. Ojo: no es ROI en dólares — no tenemos costo por canal, esto es efectividad de conversión."
+          description="Volumen de negocios y tasa de conversión según la fuente por la cual el prospecto tomó contacto con Vambe, con ejemplos representativos de cada origen."
+          note="Mide la efectividad y fit comercial de cada canal de prospección o inbound. Permite identificar qué orígenes traen leads con mayor probabilidad de cierre (eficiencia de conversión)."
         />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">

@@ -1,32 +1,30 @@
 import type { ClientAnalysis, ClientFilters } from "./types";
 
-// Valores "vacíos" del LLM que necesitan una etiqueta amigable en vez del
-// string crudo del enum, y que siempre deberían aparecer al final del
-// dropdown en vez de mezclarse alfabéticamente con valores reales.
-const FRIENDLY_LABELS: Record<string, string> = {
-  no_inferible: "No especificado",
-  no_mencionado: "No mencionado",
-  Otro: "Otro",
-};
-
-export function friendlyLabel(value: string): string {
-  return FRIENDLY_LABELS[value] ?? value;
+export interface FilterFieldOptions {
+  values: string[];
+  hasNulls: boolean;
 }
 
-function uniqueSorted(values: string[]): string[] {
-  const set = [...new Set(values)];
-  const normales = set.filter((v) => !(v in FRIENDLY_LABELS)).sort();
-  const especiales = set.filter((v) => v in FRIENDLY_LABELS).sort();
-  return [...normales, ...especiales];
+function fieldOptions(values: (string | null)[]): FilterFieldOptions {
+  const nonNull = values.filter((v): v is string => v !== null);
+  return {
+    values: [...new Set(nonNull)].sort(),
+    hasNulls: values.some((v) => v === null),
+  };
+}
+
+function matches<T>(filterValue: T | null | undefined, actualValue: T | null): boolean {
+  if (filterValue === undefined) return true;
+  return actualValue === filterValue;
 }
 
 export function applyFilters(clients: ClientAnalysis[], filters: ClientFilters): ClientAnalysis[] {
   return clients.filter((c) => {
-    if (filters.industria && c.industria !== filters.industria) return false;
-    if (filters.sectorB2bB2c && c.sectorB2bB2c !== filters.sectorB2bB2c) return false;
-    if (filters.tamanoNegocio && c.tamanoNegocio !== filters.tamanoNegocio) return false;
-    if (filters.complejidadTecnica && c.complejidadTecnica !== filters.complejidadTecnica) return false;
-    if (filters.urgencia && c.urgencia !== filters.urgencia) return false;
+    if (!matches(filters.industria, c.industria)) return false;
+    if (!matches(filters.sectorB2bB2c, c.sectorB2bB2c)) return false;
+    if (!matches(filters.tamanoNegocio, c.tamanoNegocio)) return false;
+    if (!matches(filters.complejidadTecnica, c.complejidadTecnica)) return false;
+    if (!matches(filters.urgencia, c.urgencia)) return false;
     if (filters.vendedor && c.vendedor !== filters.vendedor) return false;
     if (filters.tipoCanal && c.tipoCanal !== filters.tipoCanal) return false;
     if (filters.areaNegocioPrincipal && c.areaNegocioPrincipal !== filters.areaNegocioPrincipal) return false;
@@ -44,20 +42,20 @@ export function searchClients(clients: ClientAnalysis[], query: string): ClientA
       c.casosUsoPrincipales.some((v) => v.toLowerCase().includes(q)) ||
       c.integracionesRequeridas.some((v) => v.toLowerCase().includes(q)) ||
       c.objecionesPrincipales.some((v) => v.toLowerCase().includes(q)) ||
-      c.canalDescubrimiento.toLowerCase().includes(q) ||
-      c.nombreCliente.toLowerCase().includes(q)
+      (c.canalDescubrimiento ?? "").toLowerCase().includes(q) ||
+      (c.nombreCliente ?? "").toLowerCase().includes(q)
   );
 }
 
 export function getFilterOptions(clients: ClientAnalysis[]) {
   return {
-    industrias: uniqueSorted(clients.map((c) => c.industria)),
-    sectores: uniqueSorted(clients.map((c) => c.sectorB2bB2c)),
-    tamanos: uniqueSorted(clients.map((c) => c.tamanoNegocio)),
-    complejidades: uniqueSorted(clients.map((c) => c.complejidadTecnica)),
-    urgencias: uniqueSorted(clients.map((c) => c.urgencia)),
-    vendedores: uniqueSorted(clients.map((c) => c.vendedor)),
-    tiposCanal: uniqueSorted(clients.map((c) => c.tipoCanal)),
-    areas: uniqueSorted(clients.map((c) => c.areaNegocioPrincipal)),
+    industrias: fieldOptions(clients.map((c) => c.industria)),
+    sectores: fieldOptions(clients.map((c) => c.sectorB2bB2c)),
+    tamanos: fieldOptions(clients.map((c) => c.tamanoNegocio)),
+    complejidades: fieldOptions(clients.map((c) => c.complejidadTecnica)),
+    urgencias: fieldOptions(clients.map((c) => c.urgencia)),
+    vendedores: [...new Set(clients.map((c) => c.vendedor))].sort(),
+    tiposCanal: fieldOptions(clients.map((c) => c.tipoCanal)),
+    areas: [...new Set(clients.map((c) => c.areaNegocioPrincipal))].sort(),
   };
 }

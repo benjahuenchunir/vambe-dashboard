@@ -156,22 +156,32 @@ class NecesidadesYCasosUso(BaseModel):
         default_factory=list,
         description="Casos de uso principales que busca resolver el cliente.",
     )
-    integraciones_requeridas: list[str] = Field(
+    integraciones_requeridas: list[
+        Literal[
+            "CRM",
+            "ERP",
+            "Calendario / Agendamiento",
+            "Pasarela de Pagos",
+            "Ecommerce",
+            "Sistema Académico / LMS",
+            "Facturación / DTE",
+            "Inventario / Stock",
+            "Helpdesk / Atención al Cliente",
+            "Marketing Automation",
+            "API / Webhook",
+            "GPS / Rastreo",
+            "Logística / Envíos",
+            "Email / Comunicación",
+            "ATS / Reclutamiento",
+            "Finanzas / Crédito",
+            "Otro",
+        ]
+    ] = Field(
         default_factory=list,
         description=(
-            "Lista de categorías GENERALES de sistemas que requiere integrar el cliente.\n"
-            "NUNCA uses nombres de marcas o software específicos. Mapea todo a su categoría macro:\n"
-            "- Salesforce, HubSpot, Zoho, Pipedrive -> 'CRM'\n"
-            "- Softland, Defontana, SAP -> 'ERP'\n"
-            "- Software de citas/reservas, Google Calendar -> 'Calendario / Agendamiento'\n"
-            "- Webpay, Stripe, Mercado Pago -> 'Pasarela de Pagos'\n"
-            "- Shopify, WooCommerce, Vtex -> 'Ecommerce'\n"
-            "- Moodle, Canvas, sistema de alumnos/cursos -> 'Sistema Académico / LMS'\n"
-            "- Boletas, facturas, DTE -> 'Facturación / DTE'\n"
-            "- Control de stock/inventario -> 'Inventario / Stock'\n"
-            "- 'Helpdesk / Atención al Cliente'\n"
-            "- 'Marketing Automation'\n"
-            "- 'API / Webhook'\n"
+            "Lista de categorías GENERALES de sistemas que requiere integrar el cliente. "
+            "NUNCA uses nombres de marcas o software específicos. Mapea todo a su categoría macro "
+            "usando las reglas de consolidación del prompt. Elimina duplicados."
         ),
     )
 

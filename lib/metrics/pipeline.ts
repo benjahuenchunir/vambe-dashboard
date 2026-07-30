@@ -9,8 +9,9 @@ export function computeKpis(clients: ClientAnalysis[]) {
   const total = clients.length;
   const cerrados = clients.filter((c) => c.cierre);
 
-  const volumenPromedio = total
-    ? Math.round(clients.reduce((sum, c) => sum + (c.volumenConsultasMensual ?? 0), 0) / total)
+  const casosConVolumen = clients.filter((c) => typeof c.volumenConsultasMensual === "number");
+  const volumenPromedioMensual = casosConVolumen.length > 0
+    ? casosConVolumen.reduce((acc, c) => acc + (c.volumenConsultasMensual ?? 0), 0) / casosConVolumen.length
     : 0;
   const readinessPromedio = avg(clients.map((c) => c.vambeReadinessScore ?? 0));
 
@@ -18,7 +19,7 @@ export function computeKpis(clients: ClientAnalysis[]) {
     tasaCierre: pct(cerrados.length, total),
     dealsGanados: cerrados.length,
     dealsTotales: total,
-    volumenPromedioMensual: volumenPromedio,
+    volumenPromedioMensual: Math.round(volumenPromedioMensual),
     readinessPromedio,
   };
 }

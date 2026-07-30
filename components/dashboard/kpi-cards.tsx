@@ -45,7 +45,7 @@ export function KpiCards({ kpis }: { kpis: KpiSummary }) {
         info={{
           description:
             "Porcentaje de reuniones categorizadas que terminaron en venta cerrada, sobre el total del pipeline actual.",
-          note: "Es el número que resume si el pipeline está convirtiendo bien — el primer dato que cualquier líder de ventas mira.",
+          note: "Resume si el pipeline está convirtiendo bien.",
         }}
       />
       <KpiCard
@@ -56,18 +56,18 @@ export function KpiCards({ kpis }: { kpis: KpiSummary }) {
         info={{
           description:
             "Promedio de consultas mensuales que cada cliente reportó en su reunión, estimado por el LLM a partir de la transcripción.",
-          note: "Calibra si el pipeline tiene volumen suficiente para justificar Vambe. Ojo: es un promedio sobre datos con mucha dispersión, úsalo como referencia general, no como cifra exacta por cliente.",
+          note: "Indica el volumen de interacción promedio que manejan los prospectos evaluados. Es un indicador clave del impacto operacional y ahorro potencial que Vambe puede generar en este segmento. Es promedio, así que hay que revisar la distribución de clientes para ver si hay outliers que lo estén inflando.",
         }}
       />
       <KpiCard
         label="Readiness Score promedio"
-        value={`${kpis.readinessPromedio} / 100`}
-        sub="Afinidad con capacidades de Vambe"
+        value={`${Math.round(kpis.readinessPromedio)} / 100`}
+        sub="Afinidad técnica y comercial con Vambe"
         icon="lucide:gauge"
         info={{
           description:
-            "Promedio del puntaje de afinidad con Vambe (0-100) de todos los clientes filtrados, combinando volumen, urgencia, complejidad técnica y riesgos de implementación.",
-          note: "Foto rápida de qué tan calificado está el pipeline en su conjunto — si baja, puede ser señal de que están entrando leads de menor calidad.",
+            "Promedio del nivel de preparación y fit de los clientes (0-100), consolidando volumen de consultas, urgencia, complejidad técnica y riesgos de implementación.",
+          note: "Evaluación macro de la salud del pipeline. Una caída sostenida indica la entrada de prospectos fuera del perfil de cliente ideal (ICP) o con baja madurez técnica.",
         }}
       />
     </section>

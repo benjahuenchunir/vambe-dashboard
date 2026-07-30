@@ -33,8 +33,8 @@ export function CloseRateByVertical({ data }: { data: CierrePorVertical[] }) {
       <CardHeader>
         <CardTitle>Tasa de cierre por vertical</CardTitle>
         <InfoTooltip
-          description="Porcentaje de negocios cerrados por industria, entre las que tienen al menos 3 casos categorizados (para que el % no lo defina una industria con 1-2 deals)."
-          note="Le dice al equipo en qué verticales enfocar prospección y contenido de ventas — no solo cuál convierte más, sino cuál conviene perseguir con confianza."
+          description="Porcentaje de negocios cerrados por industria."
+          note="Le dice al equipo en qué verticales enfocar prospección y contenido de ventas. No solo cuál convierte más, sino cuál conviene perseguir."
         />
       </CardHeader>
       <CardContent style={{ height: Math.max(220, visible.length * BAR_HEIGHT + 75) }} className="pt-0">

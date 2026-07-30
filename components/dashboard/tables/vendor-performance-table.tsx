@@ -14,7 +14,7 @@ export function VendorPerformanceTable({ data }: { data: VendedorPerformance[] }
         <CardTitle>Desempeño por vendedor</CardTitle>
         <InfoTooltip
           description="Tasa de cierre, cantidad de negocios y readiness promedio del pipeline de cada vendedor, ordenado de mayor a menor tasa de cierre."
-          note="Base para 1:1s de coaching — quién convierte mejor y quién está trabajando leads de mayor potencial, no solo quién mueve más volumen."
+          note="Base para 1:1s de coaching: quién convierte mejor y quién está trabajando leads de mayor potencial, no solo quién mueve más volumen."
         />
       </CardHeader>
       <CardContent>

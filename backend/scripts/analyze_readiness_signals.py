@@ -7,7 +7,7 @@ a mano, sin verificar contra los resultados reales. Este script calcula el
 lift real (tasa de cierre del grupo - tasa de cierre general) de cada señal
 candidata, para poder recalibrar los pesos con datos en vez de intuición.
 
-Uso: python -m processing.analyze_readiness_signals
+Uso: python -m scripts.analyze_readiness_signals
 """
 
 from collections import defaultdict
@@ -36,7 +36,10 @@ def _reporte_categorico(nombre: str, rows: list[dict], key_fn, baseline: float) 
         tasa = _tasa_cierre(subset)
         lift = round(tasa - baseline, 1)
         signo = "+" if lift >= 0 else ""
-        print(f"  {valor:<40} n={len(subset):>4}  tasa={tasa:>5.1f}%  lift={signo}{lift}pp")
+        
+        valor_str = str(valor) if valor is not None else "Sin datos"
+        
+        print(f"  {valor_str:<40} n={len(subset):>4}  tasa={tasa:>5.1f}%  lift={signo}{lift}pp")
 
 
 def _reporte_binario(nombre: str, rows: list[dict], predicate, baseline: float) -> None:

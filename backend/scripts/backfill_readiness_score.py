@@ -3,7 +3,7 @@ Recalcula vambe_readiness_score para todas las filas ya existentes, usando
 raw_extraction (la respuesta cruda del LLM ya guardada) — no vuelve a llamar
 a la API. Corre esto una vez después de actualizar los pesos en scoring.py.
 
-Uso: python -m processing.backfill_readiness_score
+Uso: python -m scripts.backfill_readiness_score
 """
 
 from data import db

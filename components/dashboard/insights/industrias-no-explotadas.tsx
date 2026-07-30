@@ -12,16 +12,16 @@ export function IndustriasNoExplotadas({ data, tasaCierreGeneral }: IndustriasNo
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Industrias no explotadas</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Al menos 10 puntos por debajo del promedio general ({tasaCierreGeneral}%), con volumen suficiente para confiar en el dato
-        </p>
+        <CardTitle>Industrias con menor conversión</CardTitle>
         <InfoTooltip
-          description="Industrias donde la tasa de cierre real está significativamente por debajo del promedio general de la cuenta, filtrando las que tienen pocos casos (dato poco confiable)."
-          note="Es una señal de negocio, no del modelo: puede indicar que el pitch, el precio o el producto no calzan bien con ese rubro específico — vale la pena revisar el diagnóstico de cada una antes de invertir más esfuerzo comercial ahí."
+          description="Sectores donde la tasa de conversión real es significativamente inferior a la media general del pipeline, excluyendo muestras pequeñas para garantizar significancia estadística."
+          note="Una baja conversión sostenida sugiere desalineación en precio, producto o pitch comercial. Conviene analizar los motivos de pérdida antes de priorizar inversión en estas verticales."
         />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        <p className="text-xs text-muted-foreground">
+          Tasa de cierre ≥ 10 puntos bajo el promedio ({tasaCierreGeneral}%), en sectores con muestra representativa
+        </p>
         {data.map((row) => (
           <div key={row.industria} className="flex flex-col gap-2 rounded-xl border border-border p-3">
             <div className="flex items-center justify-between">

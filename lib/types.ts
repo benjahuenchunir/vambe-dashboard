@@ -78,15 +78,15 @@ export interface ClientAnalysis {
 
 /** Filters applied from the dashboard segmentation bar. */
 export interface ClientFilters {
-  industria?: string;
-  sectorB2bB2c?: SectorB2B;
-  tamanoNegocio?: TamanoNegocio;
-  complejidadTecnica?: ComplejidadTecnica;
-  urgencia?: NivelUrgencia;
+  industria?: string | null;
+  sectorB2bB2c?: SectorB2B | null;
+  tamanoNegocio?: TamanoNegocio | null;
+  complejidadTecnica?: ComplejidadTecnica | null;
+  urgencia?: NivelUrgencia | null;
   vendedor?: string;
-  tipoCanal?: TipoCanal;
+  tipoCanal?: TipoCanal | null;
   areaNegocioPrincipal?: AreaNegocioPrincipal;
-  dolorExplicito?: boolean;
+  dolorExplicito?: boolean | null;
   cierre?: boolean;
 }
 

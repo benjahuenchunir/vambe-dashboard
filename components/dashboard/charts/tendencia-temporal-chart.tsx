@@ -12,7 +12,7 @@ export function TendenciaTemporalChart({ data }: { data: TendenciaMensual[] }) {
         <CardTitle>Tendencia mensual: volumen y tasa de cierre</CardTitle>
         <InfoTooltip
           description="Evolución mensual del número de leads categorizados (barras) y la tasa de cierre (línea), según la fecha de la reunión de ventas."
-          note="Responde si el pipeline crece o se achica en el tiempo, y si la conversión mejora o empeora mes a mes — la primera pregunta que hace cualquier gerente de ventas."
+          note="Responde si el pipeline crece o se achica en el tiempo, y si la conversión mejora o empeora mes a mes."
         />
       </CardHeader>
       <CardContent className="h-72">
