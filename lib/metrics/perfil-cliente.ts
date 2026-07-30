@@ -100,7 +100,7 @@ function groupAndRank<T extends string | null>(
   return sinDatos ? [...known, sinDatos] : known;
 }
 
-function computeImpactoBinario(clients: ClientAnalysis[], predicate: (c: ClientAnalysis) => boolean): ImpactoBinario {
+function computeImpactoBinario(clients: ClientAnalysis[], predicate: (c: ClientAnalysis) => boolean | null): ImpactoBinario {
   const con = clients.filter(predicate);
   const sin = clients.filter((c) => !predicate(c));
   return {

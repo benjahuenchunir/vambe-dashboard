@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { ClientAnalysis, ClientFilters } from "@/lib/types";
+import React, { useState, useEffect } from "react";
+import type { AreaNegocioPrincipal, ClientAnalysis, ClientFilters } from "@/lib/types";
 import { getFilterOptions, type FilterFieldOptions } from "@/lib/filters";
 import { Card } from "@/components/ui/card";
 
@@ -17,7 +17,7 @@ const NULL_SENTINEL = "__null__";
 
 function toSelectValue(v: string | null | undefined): string {
   if (v === undefined) return "";
-  if (v === null) return NULL_SENTINEL;
+  if (v === NULL_SENTINEL || v === null) return NULL_SENTINEL;
   return v;
 }
 
@@ -100,7 +100,7 @@ function ToggleSelect({
   onChange,
 }: {
   label: string;
-  value: boolean | undefined;
+  value: boolean | null | undefined;
   onChange: (value: boolean | undefined) => void;
 }) {
   return (
@@ -109,7 +109,7 @@ function ToggleSelect({
         {label}
       </label>
       <select
-        value={value === undefined ? "" : String(value)}
+        value={value === undefined || value === null ? "" : String(value)}
         onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value === "true")}
         aria-label={label}
         className="bg-transparent focus:outline-none text-sm text-foreground cursor-pointer -ml-1 pb-1"
@@ -127,12 +127,14 @@ export function FiltersBar({ clients, filters, onFiltersChange, query, onQueryCh
   const [localQuery, setLocalQuery] = useState(query);
   const options = getFilterOptions(clients);
 
-  // Sync internal search input if external query changes (e.g., cleared via reset button)
-  useEffect(() => {
+  // Sync internal search state with prop changes when parent updates query
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (query !== prevQuery) {
+    setPrevQuery(query);
     setLocalQuery(query);
-  }, [query]);
+  }
 
-  // Debounce query update by 300ms
+  // Debounce query update back to parent
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localQuery !== query) {
@@ -180,7 +182,7 @@ export function FiltersBar({ clients, filters, onFiltersChange, query, onQueryCh
             onChange={(v) => update("cierre", (v === "" ? undefined : v === "true") as ClientFilters["cierre"])}
           />
           <NullableSelect label="Industria" value={filters.industria} options={options.industrias} onChange={(v) => update("industria", v)} />
-          <Select label="Área de negocio" value={filters.areaNegocioPrincipal ?? ""} options={options.areas} onChange={(v) => update("areaNegocioPrincipal", v)} />
+          <Select label="Área de negocio" value={filters.areaNegocioPrincipal ?? ""} options={options.areas} onChange={(v) => update("areaNegocioPrincipal", v as AreaNegocioPrincipal)} />
 
           <button
             type="button"

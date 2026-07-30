@@ -10,7 +10,7 @@ interface AreaNegocioDistributionProps {
 }
 
 export function AreaNegocioDistribution({ clients }: AreaNegocioDistributionProps) {
-  const counts = new Map<string, { total: number; cerrados: number }>();
+  const counts = new Map<string | null, { total: number; cerrados: number }>();
   for (const c of clients) {
     const area = c.areaNegocioPrincipal;
     const entry = counts.get(area) ?? { total: 0, cerrados: 0 };
@@ -44,9 +44,17 @@ export function AreaNegocioDistribution({ clients }: AreaNegocioDistributionProp
             <XAxis type="number" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
             <YAxis type="category" dataKey="area" width={120} tick={{ fill: "var(--foreground)", fontSize: 11 }} />
             <Tooltip
-              formatter={(value: number, name: string) => {
-                if (name === "tasa") return [`${value}%`, "Tasa de cierre"];
-                return [value, name === "cerrados" ? "Cerrados" : "Total"];
+              formatter={(value, name) => {
+                const num = Number(value);
+
+                if (name === "tasa") {
+                  return [`${num}%`, "Tasa de cierre"];
+                }
+
+                return [
+                  num,
+                  name === "cerrados" ? "Cerrados" : "Total",
+                ];
               }}
               contentStyle={{ borderRadius: 12, borderColor: "var(--border)", fontSize: 12 }}
             />

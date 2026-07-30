@@ -51,7 +51,7 @@ export interface ClientAnalysis {
   tipoCanal: TipoCanal | null;
 
   // necesidades_y_casos_uso
-  areaNegocioPrincipal: AreaNegocioPrincipal | null;
+  areaNegocioPrincipal: AreaNegocioPrincipal;
   areaNegocioDetalle: string | null;
   canalesDeseados: string[];
   casosUsoPrincipales: string[];
@@ -103,13 +103,13 @@ export interface KpiSummary {
 }
 
 export interface CierrePorVertical {
-  industria: string;
+  industria: string | null;
   tasaCierre: number;
   total: number;
 }
 
 export interface IndustriaNoExplotada {
-  industria: string;
+  industria: string | null;
   totalCasos: number;
   cerrados: number;
   tasaCierre: number;
@@ -239,7 +239,7 @@ export interface VendedorPerformance {
 }
 
 export interface IndustriaNoExplotada {
-  industria: string;
+  industria: string | null;
   totalCasos: number;
   cerrados: number;
   tasaCierre: number;

@@ -1,4 +1,4 @@
-import type { ClientAnalysis } from "./types";
+import type { AreaNegocioPrincipal, ClientAnalysis, TipoCanal } from "./types";
 
 /** Exact shape of the Supabase `clients` table (see schema.sql). */
 export interface ClientRow {
@@ -60,8 +60,8 @@ export function rowToClient(row: ClientRow): ClientAnalysis {
     decisorIdentificado: row.decisor_identificado,
     volumenConsultasMensual: row.volumen_consultas_mensual,
     canalDescubrimiento: row.canal_descubrimiento,
-    tipoCanal: row.tipo_canal,
-    areaNegocioPrincipal: row.area_negocio_principal,
+    tipoCanal: row.tipo_canal as TipoCanal,
+    areaNegocioPrincipal: row.area_negocio_principal as AreaNegocioPrincipal,
     areaNegocioDetalle: row.area_negocio_detalle,
     canalesDeseados: row.canales_deseados ?? [],
     casosUsoPrincipales: row.casos_uso_principales ?? [],

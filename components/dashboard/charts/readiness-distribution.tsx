@@ -27,7 +27,10 @@ export function ReadinessDistribution({ data, tasaCierreGeneral }: ReadinessDist
             <XAxis dataKey="rango" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
             <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
             <Tooltip
-              formatter={(value: number, _name, item) => [`${value}%`, `${item.payload.total} negocios (${item.payload.cerrados} cerrados)`]}
+              formatter={(value: any, _name, item: any) => [
+                `${value ?? 0}%`,
+                `${item?.payload?.total ?? 0} negocios (${item?.payload?.cerrados ?? 0} cerrados)`,
+              ]}
               contentStyle={{ borderRadius: 12, borderColor: "var(--border)", fontSize: 12 }}
             />
             
@@ -50,7 +53,7 @@ export function ReadinessDistribution({ data, tasaCierreGeneral }: ReadinessDist
               <LabelList
                 dataKey="total"
                 position="top"
-                formatter={(v: number) => `n=${v}`}
+                formatter={(v: any) => `n=${v ?? 0}`}
                 style={{
                   fill: "var(--foreground)",
                   fontSize: 12,

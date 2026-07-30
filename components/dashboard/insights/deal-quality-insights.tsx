@@ -45,9 +45,13 @@ function impactoRows(labelCon: string, labelSin: string, impacto: ImpactoBinario
 
 export function DealQualityInsights({ data }: { data: CalidadReunion }) {
   const { impactoDolorExplicito, impactoRegulacionCompleja, impactoSistemaCompleto } = data;
-  const hasLowSample = [...data.porTamanoNegocio, ...data.porPerfilDecisor, ...(data.porTipoComprador ?? [])].some(
-    (r) => r.total < MIN_SAMPLE && r.tamano !== null && r.perfil !== null
-  );
+  
+  const hasLowSample = [...data.porTamanoNegocio, ...data.porPerfilDecisor, ...(data.porTipoComprador ?? [])].some((r: any) => {
+    const isNullValue = ("tamano" in r && r.tamano === null) || 
+                        ("perfil" in r && r.perfil === null) || 
+                        ("tipo" in r && r.tipo === null);
+    return r.total < MIN_SAMPLE && !isNullValue;
+  });
 
   return (
     <Card>

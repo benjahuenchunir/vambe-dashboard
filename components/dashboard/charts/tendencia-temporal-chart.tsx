@@ -12,11 +12,11 @@ export function TendenciaTemporalChart({ data }: { data: TendenciaMensual[] }) {
         <CardTitle>Tendencia mensual: volumen y tasa de cierre</CardTitle>
         <InfoTooltip
           description="Evolución mensual del número de leads categorizados (barras) y la tasa de cierre (línea), según la fecha de la reunión de ventas."
-          note="Responde si el pipeline crece o se achica en el tiempo, y si la conversión mejora o empeora mes a mes."
+          note="Responde si el pipeline crece o se achica en el tiempo, y si la conversión mejora o empeora mes a mes — la primera pregunta que hace cualquier gerente de ventas."
         />
       </CardHeader>
       <CardContent className="h-72">
-        <ResponsiveContainer width="100%" height="90%">
+        <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ left: 8, right: 16 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="mesLabel" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
@@ -29,7 +29,9 @@ export function TendenciaTemporalChart({ data }: { data: TendenciaMensual[] }) {
               tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
             />
             <Tooltip
-              formatter={(value: number, name) => (name === "tasaCierre" ? [`${value}%`, "Tasa de cierre"] : [value, "Leads"])}
+              formatter={(value: any, name: any) => 
+                name === "tasaCierre" ? [`${value ?? 0}%`, "Tasa de cierre"] : [value ?? 0, "Leads"]
+              }
               labelFormatter={(label) => label}
               contentStyle={{ borderRadius: 12, borderColor: "var(--border)", fontSize: 12 }}
             />

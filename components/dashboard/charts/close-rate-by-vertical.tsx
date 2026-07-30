@@ -33,12 +33,12 @@ export function CloseRateByVertical({ data }: { data: CierrePorVertical[] }) {
       <CardHeader>
         <CardTitle>Tasa de cierre por vertical</CardTitle>
         <InfoTooltip
-          description="Porcentaje de negocios cerrados por industria."
-          note="Le dice al equipo en qué verticales enfocar prospección y contenido de ventas. No solo cuál convierte más, sino cuál conviene perseguir."
+          description="Porcentaje de negocios cerrados por industria, entre las que tienen al menos 3 casos categorizados (para que el % no lo defina una industria con 1-2 deals)."
+          note="Le dice al equipo en qué verticales enfocar prospección y contenido de ventas — no solo cuál convierte más, sino cuál conviene perseguir con confianza."
         />
       </CardHeader>
-      <CardContent style={{ height: Math.max(220, visible.length * BAR_HEIGHT + 75) }} className="pt-0">
-        <ResponsiveContainer width="100%" height="95%">
+      <CardContent style={{ height: Math.max(220, visible.length * BAR_HEIGHT + 40) }} className="pt-0">
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={visible} layout="vertical" margin={{ left: 8, right: 32 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
             <XAxis
@@ -55,7 +55,10 @@ export function CloseRateByVertical({ data }: { data: CierrePorVertical[] }) {
               tickFormatter={(v: string) => truncate(v)}
             />
             <Tooltip
-              formatter={(value: number, _name, item) => [`${value}%`, `${item.payload.total} negocios`]}
+              formatter={(value: any, _name, item: any) => [
+                `${value ?? 0}%`,
+                `${item?.payload?.total ?? 0} negocios`,
+              ]}
               labelFormatter={(label) => label}
               contentStyle={{ borderRadius: 12, borderColor: "var(--border)", fontSize: 12 }}
             />
@@ -63,7 +66,7 @@ export function CloseRateByVertical({ data }: { data: CierrePorVertical[] }) {
               <LabelList
                 dataKey="total"
                 position="right"
-                formatter={(v: number) => `n=${v}`}
+                formatter={(v: any) => `n=${v ?? 0}`}
                 style={{ fill: "var(--muted-foreground)", fontSize: 11 }}
               />
             </Bar>

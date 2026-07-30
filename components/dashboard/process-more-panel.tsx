@@ -133,7 +133,7 @@ export function ProcessMorePanel({ onDataUpdated }: ProcessMorePanelProps) {
             <Button
               onClick={handleStop}
               disabled={stopping || status.stopRequested}
-              variant="destructive"
+              variant="secondary"
             >
               {status.stopRequested ? (
                 <>

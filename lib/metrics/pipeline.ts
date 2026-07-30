@@ -25,7 +25,7 @@ export function computeKpis(clients: ClientAnalysis[]) {
 }
 
 export function computeCierrePorVertical(clients: ClientAnalysis[]) {
-  const porIndustria = new Map<string, { total: number; cerrados: number }>();
+  const porIndustria = new Map<string | null, { total: number; cerrados: number }>();
   for (const c of clients) {
     const entry = porIndustria.get(c.industria) ?? { total: 0, cerrados: 0 };
     entry.total += 1;
@@ -53,7 +53,7 @@ export function computeCierrePorVertical(clients: ClientAnalysis[]) {
 export function computeIndustriasNoExplotadas(clients: ClientAnalysis[]): IndustriaNoExplotada[] {
   const baseline = pct(clients.filter((c) => c.cierre).length, clients.length);
 
-  const porIndustria = new Map<string, ClientAnalysis[]>();
+  const porIndustria = new Map<string | null, ClientAnalysis[]>();
   for (const c of clients) {
     const lista = porIndustria.get(c.industria) ?? [];
     lista.push(c);

@@ -22,12 +22,14 @@ export function VolumeVsCloseRate({ data }: { data: VolumenBucket[] }) {
             <XAxis dataKey="rango" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
             <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} allowDecimals={false} />
             <Tooltip
-              formatter={(value: number, name: string) =>
+              formatter={(value: any, name: any) =>
                 name === "cerrados" || name === "perdidos"
-                  ? [`${value} negocios`, name === "cerrados" ? "Cerrados" : "Perdidos"]
+                  ? [`${value ?? 0} negocios`, name === "cerrados" ? "Cerrados" : "Perdidos"]
                   : value
               }
-              labelFormatter={(rango, payload) => `${rango} · ${payload?.[0]?.payload?.tasaCierre ?? 0}% de cierre`}
+              labelFormatter={(rango: any, payload: any) =>
+                `${rango} · ${payload?.[0]?.payload?.tasaCierre ?? 0}% de cierre`
+              }
               contentStyle={{ borderRadius: 12, borderColor: "var(--border)", fontSize: 12 }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -36,7 +38,7 @@ export function VolumeVsCloseRate({ data }: { data: VolumenBucket[] }) {
               <LabelList
                 dataKey="tasaCierre"
                 position="top"
-                formatter={(v: number) => `${v}%`}
+                formatter={(v: any) => `${v ?? 0}%`}
                 style={{ fill: "var(--foreground)", fontSize: 12, fontWeight: 600 }}
               />
             </Bar>

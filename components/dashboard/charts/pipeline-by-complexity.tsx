@@ -39,7 +39,11 @@ export function PipelineByComplexity({ data }: { data: PipelinePorComplejidad[] 
               innerRadius={55}
               outerRadius={90}
               paddingAngle={3}
-              label={({ complejidad, porcentaje }) => `${LABELS[complejidad] ?? complejidad} ${porcentaje}%`}
+              label={({ payload }: any) => {
+                const complejidad = payload?.complejidad;
+                const porcentaje = payload?.porcentaje;
+                return `${LABELS[complejidad] ?? complejidad} ${porcentaje ?? 0}%`;
+              }}
               labelLine={false}
             >
               {data.map((entry) => (
@@ -47,7 +51,10 @@ export function PipelineByComplexity({ data }: { data: PipelinePorComplejidad[] 
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number, _name, item) => [`${value} negocios`, LABELS[item.payload.complejidad] ?? item.payload.complejidad]}
+              formatter={(value: any, _name, item: any) => [
+                `${value ?? 0} negocios`,
+                LABELS[item?.payload?.complejidad] ?? item?.payload?.complejidad,
+              ]}
               contentStyle={{ borderRadius: 12, borderColor: "var(--border)", fontSize: 12 }}
             />
           </PieChart>

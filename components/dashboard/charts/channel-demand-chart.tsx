@@ -22,10 +22,16 @@ export function ChannelDemandChart({ data }: { data: CanalDemanda[] }) {
             <XAxis type="number" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} allowDecimals={false} />
             <YAxis type="category" dataKey="canal" width={90} tick={{ fill: "var(--foreground)", fontSize: 12 }} />
             <Tooltip
-              formatter={(value: number, _name, item) => [
-                `${value} clientes (${item.payload.porcentaje}%)`,
-                item.payload.soportado ? "Soportado hoy" : "No soportado — señal de producto",
-              ]}
+              formatter={(value, _name, item) => {
+                const num = Number(value);
+
+                return [
+                  `${num} clientes (${item.payload.porcentaje}%)`,
+                  item.payload.soportado
+                    ? "Soportado hoy"
+                    : "No soportado — señal de producto",
+                ];
+              }}
               contentStyle={{ borderRadius: 12, borderColor: "var(--border)", fontSize: 12 }}
             />
             <Bar dataKey="total" radius={[0, 6, 6, 0]}>
